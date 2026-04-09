@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import { listings, type Listing } from '../data/listings';
 import { colleges, type College } from '../data/colleges';
-import { type StudentProfile, matchScore } from '../data/profile';
+import { type StudentProfile } from '../data/profile';
 import Map3DView from '../components/Map3DView';
 
 // colleges imported from ../data/colleges
@@ -128,7 +128,6 @@ export default function ExploreScreen({ onViewListing }: Props) {
   const [draft, setDraft]               = useState<StudentProfile>({ college: null, budgetMax: 900, beds: 'any' });
   const [showProfileEdit, setShowProfileEdit] = useState(false);
   const [selectedId, setSelectedId]       = useState<number | null>(null);
-  const [sheetExpanded, setSheetExpanded] = useState(false);
 
   // Major / college selection
   const [showMajorPicker, setShowMajorPicker] = useState(false);
@@ -136,7 +135,7 @@ export default function ExploreScreen({ onViewListing }: Props) {
   const [selectedMajor, setSelectedMajor]       = useState<string | null>(null);
 
   // Map area
-  const [activeArea, setActiveArea] = useState<Area>(areas[0]);
+  const [activeArea] = useState<Area>(areas[0]);
 
   const cardRowRef = useRef<HTMLDivElement>(null);
 
@@ -156,20 +155,8 @@ export default function ExploreScreen({ onViewListing }: Props) {
     return 0;
   });
 
-  const selectedListing = listings.find(l => l.id === selectedId) ?? null;
-
   const toggle = (set: Set<number>, id: number, setter: (s: Set<number>) => void) => {
     const next = new Set(set); next.has(id) ? next.delete(id) : next.add(id); setter(next);
-  };
-
-  const handlePinClick = (id: number, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setSelectedId(prev => prev === id ? null : id);
-    setSheetExpanded(false);
-    setTimeout(() => {
-      cardRowRef.current?.querySelector(`[data-id="${id}"]`)
-        ?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-    }, 50);
   };
 
   const filters = ['All', 'Verified', 'Studio', 'Quiet', '< 10 min'];

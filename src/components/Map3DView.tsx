@@ -85,7 +85,7 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
       zoom: 15.5,
       pitch: 55,
       bearing: -20,
-      antialias: true,
+      // antialias: true, // not in all MapLibre type versions
     });
 
     map.addControl(new maplibregl.NavigationControl({ showCompass: true, visualizePitch: true }), 'top-right');

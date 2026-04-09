@@ -34,7 +34,7 @@ export default function CommunityScreen() {
 
   const filtered = activeTab === 'All' ? threads : threads.filter(t => t.tag === activeTab);
   const featured = filtered[0];
-  const rest = filtered.slice(1);
+  const _rest = filtered.slice(1); void _rest;
 
   return (
     <div className="flex flex-col h-full bg-[#f7f6f2]">
@@ -140,7 +140,7 @@ export default function CommunityScreen() {
 
         {/* Thread list */}
         <div className="bg-white rounded-2xl overflow-hidden divide-y divide-black/5 border border-black/5">
-          {filtered.map((thread, idx) => (
+          {filtered.map((thread) => (
             <button key={thread.id}
               onClick={() => setExpandedId(expandedId === thread.id ? null : thread.id)}
               className="w-full text-left active:bg-[#f7f6f2] transition-colors">
