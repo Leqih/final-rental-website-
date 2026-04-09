@@ -1,9 +1,9 @@
 import { useState } from 'react';
 
-const imgFeatured = "https://www.figma.com/api/mcp/asset/c8e3188c-7fb9-418a-a3e9-9148a677a791";
-const imgCard1    = "https://www.figma.com/api/mcp/asset/c5df73a4-aaf4-483d-bec3-e0b987994107";
-const imgCard2    = "https://www.figma.com/api/mcp/asset/ca0e0406-6393-4e82-8f7a-47220dd86eb3";
-const imgRec      = "https://www.figma.com/api/mcp/asset/40b5870b-7bd1-4642-bba7-5e9712a45fb7";
+const imgFeatured = "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=800&q=80";
+const imgCard1    = "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=400&q=80";
+const imgCard2    = "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=400&q=80";
+const imgRec      = "https://images.unsplash.com/photo-1493663284031-b7e3aefcae8e?auto=format&fit=crop&w=400&q=80";
 
 interface HomeScreenProps {
   onNavigate: (tab: string) => void;

@@ -1,9 +1,9 @@
 import { useState } from 'react';
 
-const imgRoom1 = "https://www.figma.com/api/mcp/asset/c7df3280-ea4a-4e59-a829-45c85ef7f8ca";
-const imgRoom2 = "https://www.figma.com/api/mcp/asset/2e2fc307-91fd-43fa-a394-125fce0491aa";
-const imgRoom3 = "https://www.figma.com/api/mcp/asset/f350f990-08fa-41fe-a0ec-b1f0880d13c3";
-const imgRoom4 = "https://www.figma.com/api/mcp/asset/5f353437-15b9-452a-aee1-361fe7f01279";
+const imgRoom1 = "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=400&q=80";
+const imgRoom2 = "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=400&q=80";
+const imgRoom3 = "https://images.unsplash.com/photo-1484154218962-a197022b5858?auto=format&fit=crop&w=400&q=80";
+const imgRoom4 = "https://images.unsplash.com/photo-1493663284031-b7e3aefcae8e?auto=format&fit=crop&w=400&q=80";
 
 type Tab = 'All' | 'Advice' | 'Building Talk' | 'Area Insight' | 'Scam Alert';
 

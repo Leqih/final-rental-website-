@@ -1,13 +1,11 @@
-export const imgDean = "https://www.figma.com/api/mcp/asset/40b5870b-7bd1-4642-bba7-5e9712a45fb7";
-export const imgGrn  = "https://www.figma.com/api/mcp/asset/14bfec34-a6c0-464c-bdca-db948f96a459";
-export const imgHere = "https://www.figma.com/api/mcp/asset/591e3f78-efa3-47f0-a45a-dc9f11469582";
-export const imgFeat = "https://www.figma.com/api/mcp/asset/c8e3188c-7fb9-418a-a3e9-9148a677a791";
-
-// Reuse hero images for additional listings (prototype)
-export const imgSunrise = imgGrn;
-export const imgGoodwin = imgHere;
-export const imgSpring  = imgDean;
-export const imgOrchard = imgFeat;
+export const imgDean    = "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=800&q=80";
+export const imgGrn     = "https://images.unsplash.com/photo-1536376072261-38c75010e6c9?auto=format&fit=crop&w=800&q=80";
+export const imgHere    = "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=800&q=80";
+export const imgFeat    = "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=800&q=80";
+export const imgSunrise = "https://images.unsplash.com/photo-1554995207-c18c203602cb?auto=format&fit=crop&w=800&q=80";
+export const imgGoodwin = "https://images.unsplash.com/photo-1493663284031-b7e3aefcae8e?auto=format&fit=crop&w=800&q=80";
+export const imgSpring  = "https://images.unsplash.com/photo-1484154218962-a197022b5858?auto=format&fit=crop&w=800&q=80";
+export const imgOrchard = "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&w=800&q=80";
 
 export interface Listing {
   id: number;

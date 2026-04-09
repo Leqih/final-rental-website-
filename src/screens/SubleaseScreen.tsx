@@ -1,8 +1,8 @@
 import { useState } from 'react';
 
-const imgStudio = "https://www.figma.com/api/mcp/asset/765a1ec7-8303-4a02-afda-f3b9bc837b0d";
-const imgRoom = "https://www.figma.com/api/mcp/asset/481bab36-78dd-4cd9-8a90-26cf98634eb2";
-const imgFeatured = "https://www.figma.com/api/mcp/asset/c8e3188c-7fb9-418a-a3e9-9148a677a791";
+const imgStudio   = "https://images.unsplash.com/photo-1554995207-c18c203602cb?auto=format&fit=crop&w=800&q=80";
+const imgRoom     = "https://images.unsplash.com/photo-1536376072261-38c75010e6c9?auto=format&fit=crop&w=800&q=80";
+const imgFeatured = "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=800&q=80";
 
 type Period = 'All' | 'Spring' | 'Summer' | 'Fall';
 
