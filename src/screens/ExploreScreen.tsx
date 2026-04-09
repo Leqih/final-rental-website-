@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { listings, type Listing } from '../data/listings';
+import { listings } from '../data/listings';
 import { colleges, type College } from '../data/colleges';
 import { type StudentProfile } from '../data/profile';
 import Map3DView from '../components/Map3DView';
