@@ -127,7 +127,6 @@ export default function ExploreScreen({ onViewListing }: Props) {
   const [onboardStep, setOnboardStep]   = useState(0);
   const [draft, setDraft]               = useState<StudentProfile>({ college: null, budgetMax: 900, beds: 'any' });
   const [showProfileEdit, setShowProfileEdit] = useState(false);
-  const [selectedId, setSelectedId]       = useState<number | null>(null);
 
   // Major / college selection
   const [showMajorPicker, setShowMajorPicker] = useState(false);
