@@ -27,3 +27,13 @@ body {
   display: flex;
   flex-direction: column;
 }
+
+@media (min-width: 640px) {
+  body {
+    background: #ecebe7;
+  }
+  #root {
+    max-width: 100%;
+    background: transparent;
+  }
+}

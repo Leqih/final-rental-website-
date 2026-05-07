@@ -7,5 +7,6 @@ export default defineConfig({
   base: '/renting-house-app/',
   server: {
     allowedHosts: true,
+    port: 5180,
   },
 })

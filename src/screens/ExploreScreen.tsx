@@ -127,6 +127,7 @@ export default function ExploreScreen({ onViewListing }: Props) {
   const [onboardStep, setOnboardStep]   = useState(0);
   const [draft, setDraft]               = useState<StudentProfile>({ college: null, budgetMax: 900, beds: 'any' });
   const [showProfileEdit, setShowProfileEdit] = useState(false);
+  const [, setSelectedId]       = useState<number | null>(null);
 
   // Major / college selection
   const [showMajorPicker, setShowMajorPicker] = useState(false);
@@ -134,7 +135,7 @@ export default function ExploreScreen({ onViewListing }: Props) {
   const [selectedMajor, setSelectedMajor]       = useState<string | null>(null);
 
   // Map area
-  const [activeArea] = useState<Area>(areas[0]);
+  const [activeArea, _setActiveArea] = useState<Area>(areas[0]);
 
 
   const area = activeArea;
@@ -159,7 +160,6 @@ export default function ExploreScreen({ onViewListing }: Props) {
 
   const filters = ['All', 'Verified', 'Studio', 'Quiet', '< 10 min'];
 
-
   return (
     <div className="flex flex-col h-full bg-[#f7f6f2]">
 
@@ -179,7 +179,7 @@ export default function ExploreScreen({ onViewListing }: Props) {
               { v: 'map' as View, icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>, label: 'Map' },
               { v: 'list' as View, icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>, label: 'List' },
             ]).map(({ v, icon, label }) => (
-              <button key={v} onClick={() => { setView(v); }}
+              <button key={v} onClick={() => { setView(v); setSelectedId(null); }}
                 className={`h-9 rounded-[10px] transition-all flex items-center justify-center gap-1.5 ${
                   v === view ? 'bg-white shadow-sm text-[#1c1c1e] px-3.5' : 'text-[#6c6a66] px-3'
                 }`}>
