@@ -1,9 +1,9 @@
 import { useState } from 'react';
 
-const imgRoom1 = "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=400&q=80";
-const imgRoom2 = "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=400&q=80";
-const imgRoom3 = "https://images.unsplash.com/photo-1484154218962-a197022b5858?auto=format&fit=crop&w=400&q=80";
-const imgRoom4 = "https://images.unsplash.com/photo-1493663284031-b7e3aefcae8e?auto=format&fit=crop&w=400&q=80";
+const imgRoom1 = "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&q=80";
+const imgRoom2 = "https://images.unsplash.com/photo-1493809842364-78817add7ffb?w=800&q=80";
+const imgRoom3 = "https://images.unsplash.com/photo-1484154218962-a197022b5858?w=800&q=80";
+const imgRoom4 = "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&q=80";
 
 type Tab = 'All' | 'Advice' | 'Building Talk' | 'Area Insight' | 'Scam Alert';
 
@@ -34,7 +34,6 @@ export default function CommunityScreen() {
 
   const filtered = activeTab === 'All' ? threads : threads.filter(t => t.tag === activeTab);
   const featured = filtered[0];
-  const _rest = filtered.slice(1); void _rest;
 
   return (
     <div className="flex flex-col h-full bg-[#f7f6f2]">
@@ -140,7 +139,7 @@ export default function CommunityScreen() {
 
         {/* Thread list */}
         <div className="bg-white rounded-2xl overflow-hidden divide-y divide-black/5 border border-black/5">
-          {filtered.map((thread) => (
+          {filtered.map((thread, _idx) => (
             <button key={thread.id}
               onClick={() => setExpandedId(expandedId === thread.id ? null : thread.id)}
               className="w-full text-left active:bg-[#f7f6f2] transition-colors">

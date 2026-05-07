@@ -1,11 +1,13 @@
-export const imgDean    = "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=800&q=80";
-export const imgGrn     = "https://images.unsplash.com/photo-1536376072261-38c75010e6c9?auto=format&fit=crop&w=800&q=80";
-export const imgHere    = "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=800&q=80";
-export const imgFeat    = "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=800&q=80";
-export const imgSunrise = "https://images.unsplash.com/photo-1554995207-c18c203602cb?auto=format&fit=crop&w=800&q=80";
-export const imgGoodwin = "https://images.unsplash.com/photo-1493663284031-b7e3aefcae8e?auto=format&fit=crop&w=800&q=80";
-export const imgSpring  = "https://images.unsplash.com/photo-1484154218962-a197022b5858?auto=format&fit=crop&w=800&q=80";
-export const imgOrchard = "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&w=800&q=80";
+export const imgDean    = "https://images.unsplash.com/photo-1580587771525-78b9dba3b914?w=800&q=80";
+export const imgGrn     = "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&q=80";
+export const imgHere    = "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&q=80";
+export const imgFeat    = "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&q=80";
+
+// Reuse hero images for additional listings (prototype)
+export const imgSunrise = "https://images.unsplash.com/photo-1574362848149-11496d93a7c7?w=800&q=80";
+export const imgGoodwin = "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&q=80";
+export const imgSpring  = "https://images.unsplash.com/photo-1493809842364-78817add7ffb?w=800&q=80";
+export const imgOrchard = "https://images.unsplash.com/photo-1484154218962-a197022b5858?w=800&q=80";
 
 export interface Listing {
   id: number;

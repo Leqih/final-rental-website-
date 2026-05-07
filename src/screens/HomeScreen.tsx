@@ -1,9 +1,9 @@
 import { useState } from 'react';
 
-const imgFeatured = "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=800&q=80";
-const imgCard1    = "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=400&q=80";
-const imgCard2    = "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=400&q=80";
-const imgRec      = "https://images.unsplash.com/photo-1493663284031-b7e3aefcae8e?auto=format&fit=crop&w=400&q=80";
+const imgFeatured = "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&q=80";
+const imgCard1    = "https://images.unsplash.com/photo-1574362848149-11496d93a7c7?w=800&q=80";
+const imgCard2    = "https://images.unsplash.com/photo-1580587771525-78b9dba3b914?w=800&q=80";
+const imgRec      = "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&q=80";
 
 interface HomeScreenProps {
   onNavigate: (tab: string) => void;

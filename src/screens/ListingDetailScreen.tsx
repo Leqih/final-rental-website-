@@ -67,18 +67,35 @@ interface Props {
   listing: Listing;
   onBack: () => void;
   selectedCollegeId?: string | null;
+  onNavigate?: (tab: string) => void;
 }
 
-export default function ListingDetailScreen({ listing, onBack, selectedCollegeId }: Props) {
+export default function ListingDetailScreen({ listing, onBack, selectedCollegeId, onNavigate }: Props) {
   const [saved, setSaved] = useState(false);
-  const [showContact, setShowContact] = useState(false);
+  const [_showContact, setShowContact] = useState(false);
+  const [showApply, setShowApply] = useState(false);
+  const [applyStep, setApplyStep] = useState<'tour' | 'info' | 'done'>('tour');
+  const [tourDate, setTourDate] = useState('');
+  const [tourTime, setTourTime] = useState('');
+  const [applyName, setApplyName] = useState('');
+  const [applyEmail, setApplyEmail] = useState('');
+  const [applyNetid, setApplyNetid] = useState('');
+  const [applyNote, setApplyNote] = useState('');
   const [activeTab, setActiveTab] = useState<'overview' | 'walk' | 'amenities' | 'reviews'>('overview');
+
+  const tourDates = [
+    { label: 'Mon', date: 'Apr 7' }, { label: 'Tue', date: 'Apr 8' },
+    { label: 'Wed', date: 'Apr 9' }, { label: 'Thu', date: 'Apr 10' },
+    { label: 'Fri', date: 'Apr 11' }, { label: 'Mon', date: 'Apr 14' },
+    { label: 'Tue', date: 'Apr 15' },
+  ];
+  const tourTimes = ['10:00 AM', '11:30 AM', '1:00 PM', '2:30 PM', '4:00 PM'];
   const reviews = listingReviews[listing.id] ?? [];
 
   const highlightCollege = colleges.find(c => c.id === selectedCollegeId);
 
   return (
-    <div className="flex flex-col h-screen bg-white overflow-hidden">
+    <div className="relative flex flex-col h-screen bg-white overflow-hidden">
 
       {/* ── Hero image ── */}
       <div className="relative flex-shrink-0" style={{ height: '280px' }}>
@@ -330,7 +347,6 @@ export default function ListingDetailScreen({ listing, onBack, selectedCollegeId
             </div>
           </div>
         )}
-      </div>
 
         {/* ── Reviews tab ── */}
         {activeTab === 'reviews' && (
@@ -380,59 +396,240 @@ export default function ListingDetailScreen({ listing, onBack, selectedCollegeId
               ))}
             </div>
 
-            {/* Community CTA */}
-            <div className="mt-4 bg-indigo-50 border border-indigo-100 rounded-2xl p-4 flex items-center gap-3">
-              <span className="text-2xl flex-shrink-0">💬</span>
-              <div className="flex-1 min-w-0">
-                <p className="text-[13px] font-semibold text-indigo-800">Have you lived here?</p>
-                <p className="text-[12px] text-indigo-600 mt-0.5">Share your experience in the Community tab</p>
+            {/* Community jump CTA */}
+            <button
+              onClick={() => onNavigate?.('community')}
+              className="mt-4 w-full bg-[#1c1c1e] rounded-2xl p-4 flex items-center gap-3 text-left active:opacity-90 transition-opacity"
+            >
+              <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center flex-shrink-0">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                </svg>
               </div>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <div className="flex-1 min-w-0">
+                <p className="text-[13px] font-semibold text-white">Discuss this building</p>
+                <p className="text-[12px] text-white/60 mt-0.5">See what students are posting in Community →</p>
+              </div>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="9 18 15 12 9 6"/>
               </svg>
-            </div>
+            </button>
           </div>
         )}
+      </div>
 
       {/* ── Fixed CTA bar ── */}
-      <div className="absolute bottom-0 left-0 right-0 bg-white/95 backdrop-blur-xl border-t border-black/8 px-5 pt-3 pb-8">
+      <div className="absolute bottom-0 left-0 right-0 bg-white/95 backdrop-blur-xl border-t border-black/8 px-5 pt-3 pb-6">
         <div className="flex gap-3">
           <button
-            onClick={() => setShowContact(true)}
-            className="h-13 py-3.5 flex-1 bg-[#f7f6f2] border border-black/10 rounded-2xl text-[#1c1c1e] text-[15px] font-semibold"
+            onClick={() => { setApplyStep('tour'); setShowApply(true); }}
+            className="py-3.5 flex-1 bg-[#f7f6f2] border border-black/10 rounded-2xl text-[#1c1c1e] text-[15px] font-semibold"
           >
             Schedule Tour
           </button>
-          <button className="h-13 py-3.5 flex-1 bg-[#1c1c1e] rounded-2xl text-white text-[15px] font-semibold shadow-sm">
+          <button
+            onClick={() => { setApplyStep('tour'); setShowApply(true); }}
+            className="py-3.5 flex-1 bg-[#1c1c1e] rounded-2xl text-white text-[15px] font-semibold shadow-sm"
+          >
             Apply Now
           </button>
         </div>
       </div>
 
-      {/* ── Contact modal ── */}
-      {showContact && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-end" onClick={() => setShowContact(false)}>
-          <div className="bg-white w-full max-w-[428px] mx-auto rounded-t-3xl pt-5 pb-10 px-6"
-            onClick={e => e.stopPropagation()}>
-            <div className="w-10 h-1 bg-black/10 rounded-full mx-auto mb-5" />
-            <p className="text-[#1c1c1e] text-[18px] font-bold mb-1">Contact landlord</p>
-            <p className="text-[#6c6a66] text-[14px] mb-5">{listing.landlord}</p>
-            <div className="flex flex-col gap-2.5">
-              <a href={`tel:${listing.phone}`} className="flex items-center gap-4 p-4 bg-[#f7f6f2] rounded-2xl">
-                <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-lg">📞</div>
-                <div>
-                  <p className="text-[#1c1c1e] text-[14px] font-semibold">Call</p>
-                  <p className="text-[#6c6a66] text-[12px] mt-0.5">{listing.phone}</p>
+      {/* ── Apply / Tour wizard ── */}
+      {showApply && (
+        <div className="absolute inset-0 bg-black/50 z-50 flex items-end" onClick={() => setShowApply(false)}>
+          <div
+            className="bg-white w-full rounded-t-3xl pt-5 pb-10 px-6"
+            style={{ maxHeight: '92vh', overflowY: 'auto' }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="w-10 h-1 bg-black/10 rounded-full mx-auto mb-4" />
+
+            {/* Step indicator */}
+            {applyStep !== 'done' && (
+              <div className="flex items-center gap-2 mb-5">
+                {(['tour', 'info'] as const).map((s, i) => (
+                  <div key={s} className="flex items-center gap-2">
+                    <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold transition-colors ${
+                      applyStep === s ? 'bg-[#1c1c1e] text-white' : 'bg-[#e5e4e0] text-[#6c6a66]'
+                    }`}>{i + 1}</div>
+                    <span className={`text-[12px] font-semibold ${applyStep === s ? 'text-[#1c1c1e]' : 'text-[#aaa]'}`}>
+                      {s === 'tour' ? 'Schedule visit' : 'Your info'}
+                    </span>
+                    {i < 1 && <div className="w-6 h-px bg-[#e5e4e0]" />}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* ── Step 1: Tour ── */}
+            {applyStep === 'tour' && (
+              <>
+                <p className="text-[#1c1c1e] text-[18px] font-bold mb-1">Schedule a viewing</p>
+                <p className="text-[#6c6a66] text-[13px] mb-5">{listing.name} · {listing.address}</p>
+
+                <p className="text-[12px] font-semibold text-[#6c6a66] uppercase tracking-wide mb-2">Pick a date</p>
+                <div className="grid grid-cols-7 gap-1.5 mb-5">
+                  {tourDates.map(d => (
+                    <button
+                      key={d.date}
+                      onClick={() => setTourDate(d.date)}
+                      className={`flex flex-col items-center py-2.5 rounded-xl text-center transition-colors ${
+                        tourDate === d.date
+                          ? 'bg-[#1c1c1e] text-white'
+                          : 'bg-[#f7f6f2] text-[#1c1c1e] hover:bg-[#ede]'
+                      }`}
+                    >
+                      <span className="text-[10px] font-semibold opacity-70">{d.label}</span>
+                      <span className="text-[12px] font-bold mt-0.5 leading-tight">{d.date.split(' ')[1]}</span>
+                    </button>
+                  ))}
                 </div>
-              </a>
-              <button className="flex items-center gap-4 p-4 bg-[#f7f6f2] rounded-2xl text-left">
-                <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-lg">✉️</div>
-                <div>
-                  <p className="text-[#1c1c1e] text-[14px] font-semibold">Message in app</p>
-                  <p className="text-[#6c6a66] text-[12px] mt-0.5">Typically responds in 2 hours</p>
+
+                <p className="text-[12px] font-semibold text-[#6c6a66] uppercase tracking-wide mb-2">Pick a time</p>
+                <div className="flex flex-wrap gap-2 mb-5">
+                  {tourTimes.map(t => (
+                    <button
+                      key={t}
+                      onClick={() => setTourTime(t)}
+                      className={`px-4 py-2 rounded-xl text-[13px] font-semibold transition-colors ${
+                        tourTime === t
+                          ? 'bg-[#1c1c1e] text-white'
+                          : 'bg-[#f7f6f2] text-[#1c1c1e] hover:bg-[#e5e4e0]'
+                      }`}
+                    >
+                      {t}
+                    </button>
+                  ))}
                 </div>
-              </button>
-            </div>
+
+                {tourDate && tourTime && (
+                  <div className="mb-4 bg-emerald-50 border border-emerald-100 rounded-xl px-4 py-3 flex items-center gap-2.5">
+                    <span className="text-base">📅</span>
+                    <p className="text-[13px] font-semibold text-emerald-800">{tourDate}, {tourTime} · In-person viewing</p>
+                  </div>
+                )}
+
+                <button
+                  onClick={() => { if (tourDate && tourTime) setApplyStep('info'); }}
+                  className={`w-full rounded-2xl py-3.5 text-[15px] font-semibold transition-colors ${
+                    tourDate && tourTime ? 'bg-[#1c1c1e] text-white' : 'bg-[#e5e4e0] text-[#aaa] cursor-not-allowed'
+                  }`}
+                >
+                  Next: Your Information →
+                </button>
+              </>
+            )}
+
+            {/* ── Step 2: Info ── */}
+            {applyStep === 'info' && (
+              <>
+                <p className="text-[#1c1c1e] text-[18px] font-bold mb-1">Tell us about yourself</p>
+                <p className="text-[#6c6a66] text-[13px] mb-5">Tour: {tourDate} at {tourTime}</p>
+
+                <div className="flex flex-col gap-3">
+                  <div>
+                    <label className="text-[12px] font-semibold text-[#6c6a66] uppercase tracking-wide mb-1.5 block">Full Name</label>
+                    <input value={applyName} onChange={e => setApplyName(e.target.value)} placeholder="Jane Smith"
+                      className="w-full bg-[#f7f6f2] rounded-xl px-4 py-3 text-[14px] text-[#1c1c1e] placeholder-[#aaa] outline-none focus:ring-2 focus:ring-[#1c1c1e]/10" />
+                  </div>
+                  <div>
+                    <label className="text-[12px] font-semibold text-[#6c6a66] uppercase tracking-wide mb-1.5 block">Email</label>
+                    <input value={applyEmail} onChange={e => setApplyEmail(e.target.value)} placeholder="you@illinois.edu" type="email"
+                      className="w-full bg-[#f7f6f2] rounded-xl px-4 py-3 text-[14px] text-[#1c1c1e] placeholder-[#aaa] outline-none focus:ring-2 focus:ring-[#1c1c1e]/10" />
+                  </div>
+                  <div>
+                    <label className="text-[12px] font-semibold text-[#6c6a66] uppercase tracking-wide mb-1.5 block">UIUC NetID</label>
+                    <input value={applyNetid} onChange={e => setApplyNetid(e.target.value)} placeholder="jsmith4"
+                      className="w-full bg-[#f7f6f2] rounded-xl px-4 py-3 text-[14px] text-[#1c1c1e] placeholder-[#aaa] outline-none focus:ring-2 focus:ring-[#1c1c1e]/10" />
+                  </div>
+                  <div>
+                    <label className="text-[12px] font-semibold text-[#6c6a66] uppercase tracking-wide mb-1.5 block">Message to landlord</label>
+                    <textarea value={applyNote} onChange={e => setApplyNote(e.target.value)}
+                      placeholder={`Hi, I'm interested in ${listing.name}. I'm a UIUC student looking for a place starting ${listing.available}...`}
+                      rows={3}
+                      className="w-full bg-[#f7f6f2] rounded-xl px-4 py-3 text-[14px] text-[#1c1c1e] placeholder-[#aaa] outline-none focus:ring-2 focus:ring-[#1c1c1e]/10 resize-none"
+                    />
+                    <p className="text-[11px] text-[#aaa] mt-1">This starts a message thread with the landlord</p>
+                  </div>
+                </div>
+
+                <div className="mt-4 bg-[#f7f6f2] rounded-2xl p-3.5 flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-full bg-[#e0dfd9] flex items-center justify-center text-base flex-shrink-0">🏢</div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[12px] font-semibold text-[#1c1c1e]">{listing.landlord}</p>
+                    <p className="text-[11px] text-[#6c6a66]">Verified · typically responds in 2 hrs</p>
+                  </div>
+                  <span className="text-[11px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">Verified</span>
+                </div>
+
+                <div className="flex gap-2.5 mt-4">
+                  <button onClick={() => setApplyStep('tour')}
+                    className="py-3.5 px-5 bg-[#f7f6f2] border border-black/10 rounded-2xl text-[#1c1c1e] text-[14px] font-semibold">
+                    ← Back
+                  </button>
+                  <button
+                    onClick={() => { if (applyName && applyEmail) setApplyStep('done'); }}
+                    className={`flex-1 rounded-2xl py-3.5 text-[15px] font-semibold transition-colors ${
+                      applyName && applyEmail ? 'bg-[#1c1c1e] text-white' : 'bg-[#e5e4e0] text-[#aaa] cursor-not-allowed'
+                    }`}
+                  >
+                    Submit &amp; Confirm Tour
+                  </button>
+                </div>
+              </>
+            )}
+
+            {/* ── Step 3: Done ── */}
+            {applyStep === 'done' && (
+              <div className="flex flex-col items-center py-4 text-center">
+                <div className="w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center text-3xl mb-4">🎉</div>
+                <p className="text-[#1c1c1e] text-[20px] font-bold mb-1">You're confirmed!</p>
+                <p className="text-[#6c6a66] text-[14px] leading-relaxed">
+                  Tour at <span className="font-semibold text-[#1c1c1e]">{listing.name}</span>
+                </p>
+                <p className="text-[#6c6a66] text-[13px] mb-5">{tourDate} · {tourTime}</p>
+
+                <div className="w-full bg-[#f7f6f2] rounded-2xl divide-y divide-black/6 mb-5 text-left">
+                  <div className="flex items-center gap-3 px-4 py-3">
+                    <span className="text-base">📅</span>
+                    <div>
+                      <p className="text-[13px] font-semibold text-[#1c1c1e]">Tour scheduled</p>
+                      <p className="text-[12px] text-[#6c6a66]">{tourDate} at {tourTime} — in-person</p>
+                    </div>
+                    <svg className="ml-auto" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#34c759" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                  </div>
+                  <div className="flex items-center gap-3 px-4 py-3">
+                    <span className="text-base">📋</span>
+                    <div>
+                      <p className="text-[13px] font-semibold text-[#1c1c1e]">Application sent</p>
+                      <p className="text-[12px] text-[#6c6a66]">Sent to {listing.landlord}</p>
+                    </div>
+                    <svg className="ml-auto" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#34c759" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                  </div>
+                  <div className="flex items-center gap-3 px-4 py-3">
+                    <span className="text-base">💬</span>
+                    <div>
+                      <p className="text-[13px] font-semibold text-[#1c1c1e]">Message thread opened</p>
+                      <p className="text-[12px] text-[#6c6a66]">Chat directly with the landlord</p>
+                    </div>
+                    <svg className="ml-auto" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#34c759" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => { setShowApply(false); onNavigate?.('messages'); }}
+                  className="w-full bg-[#1c1c1e] text-white rounded-2xl py-3.5 text-[15px] font-semibold mb-2"
+                >
+                  Open Messages →
+                </button>
+                <button onClick={() => setShowApply(false)}
+                  className="w-full text-[#6c6a66] text-[14px] font-medium py-2">
+                  Back to listing
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}

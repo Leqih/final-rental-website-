@@ -4,11 +4,12 @@ const imgStudio = "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=8
 const imgRoom = "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&q=80";
 const imgFeatured = "https://images.unsplash.com/photo-1580587771525-78b9dba3b914?w=800&q=80";
 
-type Period = 'All' | 'Spring' | 'Summer' | 'Fall';
+type RoomType = 'All' | 'Studio' | '1B1B' | '2B2B';
+type SortBy = 'Nearest' | 'Price: Low' | 'Price: High';
 
 const subleases = [
   {
-    id: 1, img: imgStudio, price: 790, type: 'Studio', period: 'Summer' as Period,
+    id: 1, img: imgStudio, price: 790, type: 'Studio' as RoomType,
     title: 'Studio at Green Street',
     dates: 'May – Aug 2026',
     address: '302 E John St',
@@ -19,7 +20,7 @@ const subleases = [
     posted: '2d ago',
   },
   {
-    id: 2, img: imgRoom, price: 680, type: '1 room / 2B2B', period: 'Fall' as Period,
+    id: 2, img: imgRoom, price: 680, type: '2B2B' as RoomType,
     title: '1 room in 2-bed at Clark St',
     dates: 'Aug – Dec 2026',
     address: '512 E Clark St',
@@ -30,7 +31,7 @@ const subleases = [
     posted: '5d ago',
   },
   {
-    id: 3, img: imgFeatured, price: 840, type: '1B1B', period: 'Summer' as Period,
+    id: 3, img: imgFeatured, price: 840, type: '1B1B' as RoomType,
     title: '1BR at The Dean — summer only',
     dates: 'Jun – Aug 2026',
     address: '1011 S First St',
@@ -42,16 +43,24 @@ const subleases = [
   },
 ];
 
-const periods: Period[] = ['All', 'Spring', 'Summer', 'Fall'];
+const roomTypes: RoomType[] = ['All', 'Studio', '1B1B', '2B2B'];
+const sortOptions: SortBy[] = ['Nearest', 'Price: Low', 'Price: High'];
 
 export default function SubleaseScreen() {
-  const [period, setPeriod] = useState<Period>('All');
+  const [roomType, setRoomType] = useState<RoomType>('All');
+  const [sortBy, setSortBy] = useState<SortBy>('Nearest');
   const [showPostModal, setShowPostModal] = useState(false);
   const [saved, setSaved] = useState<Set<number>>(new Set());
   const [form, setForm] = useState({ title: '', price: '', type: '', dates: '', address: '', notes: '' });
   const [step, setStep] = useState(1);
 
-  const filtered = period === 'All' ? subleases : subleases.filter(s => s.period === period);
+  const filtered = subleases
+    .filter(s => roomType === 'All' || s.type === roomType)
+    .sort((a, b) =>
+      sortBy === 'Price: Low'  ? a.price - b.price :
+      sortBy === 'Price: High' ? b.price - a.price :
+      a.dist - b.dist
+    );
 
   const toggleSave = (id: number) => {
     setSaved(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
@@ -70,17 +79,33 @@ export default function SubleaseScreen() {
         </div>
         <p className="text-[#6c6a66] text-[14px] mt-1 mb-4">Verified sublease listings from fellow students</p>
 
-        {/* Period tabs */}
-        <div className="flex gap-2">
-          {periods.map(p => (
-            <button key={p}
-              onClick={() => setPeriod(p)}
-              className={`h-9 px-4 rounded-full text-[13px] font-semibold transition-all ${
-                period === p
+        {/* Room type filter chips */}
+        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
+          {roomTypes.map(r => (
+            <button key={r}
+              onClick={() => setRoomType(r)}
+              className={`h-9 px-4 rounded-full text-[13px] font-semibold whitespace-nowrap transition-all flex-shrink-0 ${
+                roomType === r
                   ? 'bg-[#1c1c1e] text-white'
                   : 'bg-[#f0efe9] text-[#6c6a66]'
               }`}>
-              {p}
+              {r}
+            </button>
+          ))}
+        </div>
+
+        {/* Sort row */}
+        <div className="flex items-center gap-2 mt-3">
+          <span className="text-[12px] text-[#9ca3af]">Sort:</span>
+          {sortOptions.map(o => (
+            <button key={o}
+              onClick={() => setSortBy(o)}
+              className={`h-8 px-3 rounded-full text-[12px] font-semibold whitespace-nowrap transition-all flex-shrink-0 ${
+                sortBy === o
+                  ? 'bg-[#1c1c1e] text-white'
+                  : 'bg-[#f0efe9] text-[#6c6a66]'
+              }`}>
+              {o}
             </button>
           ))}
         </div>
@@ -108,7 +133,7 @@ export default function SubleaseScreen() {
         {/* Result count */}
         <p className="text-[13px] text-[#6c6a66] mb-3">
           {filtered.length} listing{filtered.length !== 1 ? 's' : ''}
-          {period !== 'All' && <> · <span className="font-medium text-[#1c1c1e]">{period} 2026</span></>}
+          {roomType !== 'All' && <> · <span className="font-medium text-[#1c1c1e]">{roomType}</span></>}
         </p>
 
         {/* Listing cards */}
@@ -193,7 +218,7 @@ export default function SubleaseScreen() {
         {filtered.length === 0 && (
           <div className="text-center py-16">
             <p className="text-4xl mb-3">🏠</p>
-            <p className="text-[#1c1c1e] text-[16px] font-semibold">No {period} subleases yet</p>
+            <p className="text-[#1c1c1e] text-[16px] font-semibold">No {roomType === 'All' ? '' : roomType + ' '}subleases yet</p>
             <p className="text-[#6c6a66] text-[14px] mt-1">Be the first to post one!</p>
             <button onClick={() => setShowPostModal(true)}
               className="mt-4 h-11 px-6 bg-[#1c1c1e] rounded-2xl text-white text-[14px] font-semibold">

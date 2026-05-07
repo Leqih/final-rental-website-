@@ -6,22 +6,21 @@ import type { StudentProfile } from '../data/profile';
 import { matchScore, matchReasons } from '../data/profile';
 import type { College } from '../data/colleges';
 
-// Real UIUC coordinates per listing
+interface PinPosition { id: number; x: number; y: number }
+
 const listingCoords: Record<number, [number, number]> = {
   1: [-88.2285, 40.1040],
   2: [-88.2295, 40.1093],
   3: [-88.2236, 40.1090],
   4: [-88.2290, 40.1068],
-  5: [-88.2244, 40.1058], // Sunrise Suites – Goodwin Ave
-  6: [-88.2318, 40.1052], // Chalmers Court – W Chalmers
-  7: [-88.2338, 40.1082], // Springfield Commons – W Springfield
-  8: [-88.2255, 40.1018], // Orchard Downs – south
+  5: [-88.2244, 40.1058],
+  6: [-88.2318, 40.1052],
+  7: [-88.2338, 40.1082],
+  8: [-88.2255, 40.1018],
 };
 
-// Walking speed ~5 km/h → 1 min ≈ 83 m; 10 min ≈ 830 m
 function walkRadiusMeters(mins: number) { return mins * 83; }
 
-// Build a GeoJSON circle polygon (approximation)
 function makeCircle(center: [number, number], radiusM: number, steps = 64): GeoJSON.Feature {
   const [lng, lat] = center;
   const coords: [number, number][] = [];
@@ -34,19 +33,22 @@ function makeCircle(center: [number, number], radiusM: number, steps = 64): GeoJ
   return { type: 'Feature', properties: {}, geometry: { type: 'Polygon', coordinates: [coords] } };
 }
 
-// Score → pin color hex
-function pinColor(score: number, hasProfile: boolean): string {
-  if (!hasProfile) return '#ffffff';
-  if (score >= 80) return '#22c55e';
-  if (score >= 60) return '#f59e0b';
-  return '#d1d5db';
-}
-
-// Score → label
-function scoreLabel(score: number): string {
-  if (score >= 85) return 'Great';
-  if (score >= 65) return 'Good';
-  return 'Fair';
+export interface SubleasePin {
+  id: number
+  name: string
+  address: string
+  price: number
+  img: string
+  beds: string
+  sqft: string
+  available: string
+  period: string
+  badge: string
+  badgeColor: string
+  listingId: number
+  daysLeft: number
+  postedBy: string
+  furnished: boolean
 }
 
 interface Props {
@@ -54,19 +56,29 @@ interface Props {
   profile: StudentProfile | null;
   onViewListing: (id: number, collegeId?: string | null) => void;
   onReset: () => void;
+  mode?: 'rent' | 'sublease';
+  subleasePins?: SubleasePin[];
+  highlightPinId?: number | null;
+  onMessagePoster?: (pin: SubleasePin) => void;
+  onViewSubleaseDetail?: (id: number) => void;
 }
 
-export default function Map3DView({ selectedCollege, profile, onViewListing, onReset }: Props) {
+export default function Map3DView({ selectedCollege, profile, onViewListing, onReset, mode = 'rent', subleasePins = [], highlightPinId, onMessagePoster, onViewSubleaseDetail }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
-  const markersRef = useRef<maplibregl.Marker[]>([]);
   const buildingMarkerRef = useRef<maplibregl.Marker | null>(null);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [is3D, setIs3D] = useState(true);
   const [mapLoaded, setMapLoaded] = useState(false);
-  const [guideIdx, setGuideIdx] = useState(0); // current "guided tour" index
+  const [, setGuideIdx] = useState(0);
+  const [cardPage, setCardPage] = useState(0);
+  const [mapTypeFilter, setMapTypeFilter] = useState<'any' | 'studio' | '1br' | '2br+'>('any');
+  const [savedIds, setSavedIds] = useState<Set<number>>(new Set());
+  const [pinPositions, setPinPositions] = useState<PinPosition[]>([]);
+  const pinElemsRef = useRef<Map<number, HTMLDivElement>>(new Map());
+  // Extended coords map — includes sublease pin IDs mapped to their building coords
+  const coordsForPinsRef = useRef<Record<number, [number, number]>>({ ...listingCoords });
 
-  // Sorted listings by match score when profile is active
   const rankedListings = profile
     ? [...listings].sort((a, b) => matchScore(b, profile) - matchScore(a, profile))
     : listings;
@@ -74,7 +86,6 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
   const scores: Record<number, number> = {};
   if (profile) listings.forEach(l => { scores[l.id] = matchScore(l, profile); });
 
-  // ── Init map ─────────────────────────────────────────────────────────────────
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
 
@@ -85,36 +96,34 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
       zoom: 15.5,
       pitch: 55,
       bearing: -20,
-      // antialias: true, // not in all MapLibre type versions
-    });
+    } as maplibregl.MapOptions);
 
-    map.addControl(new maplibregl.NavigationControl({ showCompass: true, visualizePitch: true }), 'top-right');
+    map.addControl(new maplibregl.NavigationControl({ showCompass: true, visualizePitch: true }), 'bottom-right');
+
+    const movePinsDirect = () => {
+      pinElemsRef.current.forEach((el, id) => {
+        const coords = coordsForPinsRef.current[id];
+        if (!coords) return;
+        const pt = map.project(coords);
+        el.style.left = `${pt.x}px`;
+        el.style.top = `${pt.y}px`;
+      });
+    };
+    const updatePinState = () => {
+      const positions = listings.map(l => {
+        const coords = listingCoords[l.id];
+        if (!coords) return null;
+        const pt = map.project(coords);
+        return { id: l.id, x: pt.x, y: pt.y };
+      }).filter((p): p is PinPosition => p !== null);
+      setPinPositions(positions);
+    };
+    map.on('move', movePinsDirect);
+    map.on('resize', updatePinState);
 
     map.on('load', () => {
       setMapLoaded(true);
-
-      // 3D buildings
-      const layers = map.getStyle().layers ?? [];
-      let labelLayerId: string | undefined;
-      for (const layer of layers) {
-        if (layer.type === 'symbol' && (layer.layout as Record<string, unknown>)['text-field']) {
-          labelLayerId = layer.id; break;
-        }
-      }
-      if (!map.getLayer('3d-buildings')) {
-        map.addLayer({
-          id: '3d-buildings', source: 'openmaptiles', 'source-layer': 'building',
-          filter: ['==', 'extrude', 'true'], type: 'fill-extrusion', minzoom: 14,
-          paint: {
-            'fill-extrusion-color': ['interpolate', ['linear'], ['get', 'render_height'], 0, '#ddd8cc', 20, '#ccc6bb', 60, '#b8b0a0'],
-            'fill-extrusion-height': ['interpolate', ['linear'], ['zoom'], 14, 0, 14.5, ['get', 'render_height']],
-            'fill-extrusion-base': ['interpolate', ['linear'], ['zoom'], 14, 0, 14.5, ['get', 'render_min_height']],
-            'fill-extrusion-opacity': 0.88,
-          },
-        }, labelLayerId);
-      }
-
-      // Walking radius source (empty initially, updated when college selected)
+      updatePinState();
       map.addSource('walk-radius', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
       map.addLayer({ id: 'walk-radius-fill', type: 'fill', source: 'walk-radius', paint: { 'fill-color': '#4f46e5', 'fill-opacity': 0.07 } });
       map.addLayer({ id: 'walk-radius-line', type: 'line', source: 'walk-radius', paint: { 'line-color': '#4f46e5', 'line-width': 2, 'line-dasharray': [4, 3], 'line-opacity': 0.5 } });
@@ -124,13 +133,11 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
     return () => { map.remove(); mapRef.current = null; };
   }, []);
 
-  // ── Walking radius + building marker ─────────────────────────────────────────
   useEffect(() => {
     if (!mapLoaded || !mapRef.current) return;
     const map = mapRef.current;
     const college = profile?.college ?? selectedCollege;
 
-    // Update radius circle
     const src = map.getSource('walk-radius') as maplibregl.GeoJSONSource | undefined;
     if (src) {
       if (college) {
@@ -140,20 +147,12 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
       }
     }
 
-    // Building pin
     buildingMarkerRef.current?.remove();
     if (college) {
       const el = document.createElement('div');
-      el.style.cssText = `
-        display:flex;flex-direction:column;align-items:center;pointer-events:none;
-      `;
+      el.style.cssText = `display:flex;flex-direction:column;align-items:center;pointer-events:none;`;
       el.innerHTML = `
-        <div style="
-          background:#4f46e5;color:white;font-size:11px;font-weight:800;
-          padding:5px 10px;border-radius:20px;white-space:nowrap;
-          box-shadow:0 4px 16px rgba(79,70,229,0.4);
-          display:flex;align-items:center;gap:5px;
-        ">
+        <div style="background:#4f46e5;color:white;font-size:11px;font-weight:800;padding:5px 10px;border-radius:20px;white-space:nowrap;box-shadow:0 4px 16px rgba(79,70,229,0.4);display:flex;align-items:center;gap:5px;">
           <span style="font-size:14px">${college.emoji}</span>
           ${college.short} · 10 min walk
         </div>
@@ -166,73 +165,6 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
     }
   }, [mapLoaded, profile, selectedCollege]);
 
-  // ── Price pin markers ─────────────────────────────────────────────────────────
-  useEffect(() => {
-    if (!mapLoaded || !mapRef.current) return;
-    const map = mapRef.current;
-
-    markersRef.current.forEach(m => m.remove());
-    markersRef.current = [];
-
-    listings.forEach(listing => {
-      const coords = listingCoords[listing.id];
-      if (!coords) return;
-
-      const isSelected = selectedId === listing.id;
-      const score = profile ? scores[listing.id] : 0;
-      const hasProfile = !!profile;
-      const color = pinColor(score, hasProfile);
-      const textColor = hasProfile && score >= 60 ? '#fff' : '#1c1c1e';
-      const isBestMatch = hasProfile && rankedListings[0]?.id === listing.id;
-
-      const badge = listing.badge === 'Verified'
-        ? `<span style="background:rgba(111,207,151,0.95);color:#1c1c1e;font-size:9px;font-weight:700;padding:1px 6px;border-radius:20px;margin-bottom:3px;display:block;text-align:center;">${listing.badge}</span>` : '';
-
-      const matchBadge = hasProfile
-        ? `<span style="font-size:9px;font-weight:800;margin-left:3px;opacity:0.85">${score}%</span>`
-        : '';
-
-      const shadow = isSelected
-        ? `0 6px 24px ${color}88, 0 2px 8px rgba(0,0,0,0.3)`
-        : `0 2px 10px rgba(0,0,0,0.18)`;
-
-      const scale = isSelected ? 'scale(1.2)' : 'scale(1)';
-      const border = isSelected ? `2px solid ${color === '#ffffff' ? '#1c1c1e' : color}` : `2px solid ${color === '#ffffff' ? 'rgba(255,255,255,0.9)' : color + 'bb'}`;
-
-      const el = document.createElement('div');
-      el.style.cssText = `display:flex;flex-direction:column;align-items:center;cursor:pointer;transform:${scale};transition:transform 0.2s ease;z-index:${isSelected ? 20 : 10};`;
-
-      el.innerHTML = `
-        <div style="display:flex;flex-direction:column;align-items:center;">
-          ${isBestMatch && !isSelected ? `<span style="font-size:9px;background:#22c55e;color:white;font-weight:800;padding:1px 6px;border-radius:20px;margin-bottom:3px;display:block;">★ Best match</span>` : badge}
-          <div style="
-            background:${color};color:${textColor};
-            font-size:12px;font-weight:800;
-            padding:5px 11px;border-radius:20px;
-            box-shadow:${shadow};
-            border:${border};
-            white-space:nowrap;display:flex;align-items:center;gap:2px;
-          ">
-            $${listing.price}/mo${matchBadge}
-          </div>
-          <div style="width:2px;height:14px;background:${isSelected ? '#1c1c1e' : color === '#ffffff' ? '#d1d5db' : color};margin-top:-1px;border-radius:0 0 1px 1px;"></div>
-          <div style="width:9px;height:9px;border-radius:50%;background:${isSelected ? '#1c1c1e' : color === '#ffffff' ? '#d1d5db' : color};border:2px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.35);margin-top:-1px;"></div>
-        </div>
-      `;
-
-      el.addEventListener('click', e => {
-        e.stopPropagation();
-        setSelectedId(prev => prev === listing.id ? null : listing.id);
-        map.flyTo({ center: coords, zoom: 16.5, pitch: 62, bearing: map.getBearing(), duration: 700, essential: true });
-      });
-
-      markersRef.current.push(
-        new maplibregl.Marker({ element: el, anchor: 'bottom' }).setLngLat(coords).addTo(map)
-      );
-    });
-  }, [mapLoaded, selectedId, profile]);
-
-  // ── Auto-fly to best match when profile is set ────────────────────────────────
   useEffect(() => {
     if (!mapLoaded || !mapRef.current || !profile) return;
     const best = rankedListings[0];
@@ -241,15 +173,7 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
     const college = profile.college;
 
     setTimeout(() => {
-      mapRef.current?.flyTo({
-        center: coords,
-        zoom: 15.5,
-        pitch: 58,
-        bearing: -15,
-        duration: 1400,
-        essential: true,
-      });
-      // After fly-to, show the college building too
+      mapRef.current?.flyTo({ center: coords, zoom: 15.5, pitch: 58, bearing: -15, duration: 1400, essential: true });
       if (college) {
         setTimeout(() => {
           mapRef.current?.easeTo({ center: college.coords, zoom: 15.2, pitch: 55, duration: 800 });
@@ -261,7 +185,52 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
     }, 300);
   }, [profile, mapLoaded]);
 
-  // ── Toggle 3D ─────────────────────────────────────────────────────────────────
+  // Recompute pins when mode or subleasePins change
+  useEffect(() => {
+    if (!mapLoaded || !mapRef.current) return;
+    const map = mapRef.current;
+    pinElemsRef.current.clear();
+
+    if (mode === 'sublease') {
+      // Register sublease coords
+      subleasePins.forEach(s => {
+        const base = listingCoords[s.listingId];
+        if (base) coordsForPinsRef.current[s.id] = base;
+      });
+      const positions = subleasePins.map(s => {
+        const coords = coordsForPinsRef.current[s.id];
+        if (!coords) return null;
+        const pt = map.project(coords);
+        return { id: s.id, x: pt.x, y: pt.y };
+      }).filter((p): p is PinPosition => p !== null);
+      setPinPositions(positions);
+    } else {
+      const positions = listings.map(l => {
+        const coords = listingCoords[l.id];
+        if (!coords) return null;
+        const pt = map.project(coords);
+        return { id: l.id, x: pt.x, y: pt.y };
+      }).filter((p): p is PinPosition => p !== null);
+      setPinPositions(positions);
+    }
+    setCardPage(0);
+    setSelectedId(null);
+  }, [mode, subleasePins, mapLoaded]);
+
+  // Fly to + select a pin when triggered from outside (e.g. left-panel card click)
+  useEffect(() => {
+    if (highlightPinId == null || !mapLoaded) return;
+    const t = setTimeout(() => {
+      if (!mapRef.current) return;
+      const coords = coordsForPinsRef.current[highlightPinId];
+      if (coords) {
+        mapRef.current.flyTo({ center: coords, zoom: 16.5, pitch: 62, bearing: mapRef.current.getBearing(), duration: 700, essential: true });
+        setSelectedId(highlightPinId);
+      }
+    }, 100);
+    return () => clearTimeout(t);
+  }, [highlightPinId, mapLoaded]);
+
   const toggle3D = () => {
     if (!mapRef.current) return;
     if (is3D) mapRef.current.easeTo({ pitch: 0, bearing: 0, duration: 700 });
@@ -275,36 +244,449 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
     mapRef.current.flyTo({ center: coords, zoom: 17, pitch: 65, bearing: 30, duration: 900, essential: true });
   }, []);
 
-  // Navigate guided tour
-  const goToGuide = useCallback((idx: number) => {
-    const listing = rankedListings[idx];
-    if (!listing) return;
-    setGuideIdx(idx);
-    setSelectedId(listing.id);
-    flyTo(listing.id);
-  }, [rankedListings, flyTo]);
+  const PAGE = 3;
+  const typeFilteredListings = listings.filter(l => {
+    if (mapTypeFilter === 'studio') return l.beds.toLowerCase().includes('studio')
+    if (mapTypeFilter === '1br') return l.beds.startsWith('1B')
+    if (mapTypeFilter === '2br+') return !l.beds.toLowerCase().includes('studio') && !l.beds.startsWith('1B')
+    return true
+  });
+  const allCards = profile
+    ? rankedListings.filter(l => typeFilteredListings.some(t => t.id === l.id))
+    : typeFilteredListings;
+  const totalPages = Math.ceil(allCards.length / PAGE);
+  const pageCards = allCards.slice(cardPage * PAGE, cardPage * PAGE + PAGE);
+
+  const renderBottomStrip = () => (
+    <div className="absolute bottom-0 left-0 right-0 pb-3 pt-2" style={{ zIndex: 15 }}>
+      <div className="flex items-stretch px-4 relative">
+        {pageCards.map((l, pi) => {
+          const i = cardPage * PAGE + pi;
+          const s = profile ? scores[l.id] : 0;
+          const isActive = selectedId === l.id;
+          const walkMins = activeCollege ? l.walkFrom[activeCollege.id] : null;
+          return (
+            <button key={l.id}
+              onClick={() => { setSelectedId(l.id); flyTo(l.id); setGuideIdx(i); }}
+              className={`flex flex-1 min-w-0 rounded-2xl overflow-hidden transition-all h-[136px] mx-2 bg-white text-left ${isActive ? 'ring-2 ring-[#1c1c1e] shadow-xl' : 'shadow-lg hover:shadow-xl'}`}
+            >
+              <div className="relative w-[120px] flex-shrink-0 h-full">
+                <img src={l.img} className="w-full h-full object-cover" />
+                {profile && i === 0 && (
+                  <div className="absolute top-2 left-2 bg-green-500 text-white text-[9px] font-black px-2 py-1 rounded-full leading-none">★ #1</div>
+                )}
+              </div>
+              <div className="flex flex-col justify-between px-3 py-3 flex-1 min-w-0">
+                <div>
+                  <div className="flex items-start justify-between gap-1">
+                    <div className="min-w-0">
+                      <p className="text-[13px] font-bold text-[#1c1c1e] leading-tight truncate">{l.name}</p>
+                      <p className="text-[11px] text-[#9ca3af] leading-tight truncate">{l.address}</p>
+                    </div>
+                    <div role="button" className="flex-shrink-0 w-7 h-7 rounded-full bg-[#f5f4f0] flex items-center justify-center mt-0.5 cursor-pointer" onClick={e => { e.stopPropagation(); setSavedIds(prev => { const n = new Set(prev); n.has(l.id) ? n.delete(l.id) : n.add(l.id); return n; }); }}>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill={savedIds.has(l.id) ? '#ef4444' : 'none'} stroke={savedIds.has(l.id) ? '#ef4444' : '#6c6a66'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                    </div>
+                  </div>
+                  <p className="text-[15px] font-black text-[#1c1c1e] leading-tight mt-1.5">${l.price}<span className="text-[11px] font-normal text-[#9ca3af]">/month</span></p>
+                </div>
+                <div className="flex items-center gap-2.5 flex-wrap">
+                  <span className="flex items-center gap-1 text-[10px] text-[#6c6a66]">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                    {l.beds}
+                  </span>
+                  <span className="flex items-center gap-1 text-[10px] text-[#6c6a66]">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+                    {l.sqft}
+                  </span>
+                  {walkMins != null && (
+                    <span className="flex items-center gap-1 text-[10px] font-semibold text-indigo-500">
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                      {walkMins}m
+                    </span>
+                  )}
+                  {s > 0 && <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${s >= 80 ? 'bg-green-100 text-green-700' : s >= 60 ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-500'}`}>{s}%</span>}
+                  {!profile && <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ml-auto ${l.badgeColor}`}>{l.badge}</span>}
+                </div>
+              </div>
+            </button>
+          );
+        })}
+
+        {/* Arrow nav */}
+        <div className="absolute right-4 bottom-3 flex gap-1.5 items-center">
+          {profile && (
+            <button onClick={() => { setSelectedId(null); onReset(); setCardPage(0); }} className="h-8 px-2.5 rounded-xl bg-red-50 text-red-500 text-[10px] font-semibold mr-1">Reset</button>
+          )}
+          <button onClick={() => setCardPage(p => Math.max(0, p - 1))} disabled={cardPage === 0}
+            className="w-8 h-8 rounded-xl bg-[#f5f4f0] border border-[#e8e7e3] flex items-center justify-center disabled:opacity-30 hover:bg-[#ebe9e4] transition-colors">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#1c1c1e" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+          </button>
+          <button onClick={() => setCardPage(p => Math.min(totalPages - 1, p + 1))} disabled={cardPage >= totalPages - 1}
+            className="w-8 h-8 rounded-xl bg-[#f5f4f0] border border-[#e8e7e3] flex items-center justify-center disabled:opacity-30 hover:bg-[#ebe9e4] transition-colors">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#1c1c1e" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 
   const selectedListing = listings.find(l => l.id === selectedId) ?? null;
   const selectedScore = selectedListing && profile ? scores[selectedListing.id] : 0;
   const selectedReasons = selectedListing && profile ? matchReasons(selectedListing, profile) : [];
+  const activeCollege = profile?.college ?? selectedCollege;
 
   return (
     <div className="relative flex-1 overflow-hidden flex flex-col">
-      {/* Map container */}
+      <style>{`@keyframes cardIn { from { opacity:0;transform:translateY(-8px) scale(0.97); } to { opacity:1;transform:translateY(0) scale(1); } }`}</style>
+
       <div ref={containerRef} className="flex-1" />
 
+      {/* Map top toolbar — FindPlace style */}
+      <div className="absolute top-3 left-3 right-3 z-20 flex flex-col gap-2">
+        {/* Search bar + 3D toggle row */}
+        <div className="flex items-center gap-2">
+          <div className="bg-white rounded-2xl shadow-lg border border-black/6 flex items-center px-4 h-12 gap-3 flex-1 min-w-0">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <div className="flex flex-col flex-1 min-w-0">
+              <span className="text-[9px] text-[#9ca3af] font-semibold uppercase tracking-wider leading-none">Region</span>
+              <span className="text-[13px] font-semibold text-[#1c1c1e] leading-tight">UIUC area, Champaign IL</span>
+            </div>
+            <button className="w-8 h-8 rounded-full bg-[#1c1c1e] flex items-center justify-center flex-shrink-0">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <polygon points="3 11 22 2 13 21 11 13 3 11"/>
+              </svg>
+            </button>
+          </div>
+          {/* 3D / 2D toggle — inline with search bar */}
+          <button onClick={toggle3D}
+            className="h-12 px-3.5 bg-white/95 backdrop-blur-md rounded-2xl shadow-lg border border-black/8 text-[12px] font-bold text-[#1c1c1e] flex items-center gap-1.5 flex-shrink-0">
+            {is3D ? '🏙️ 3D' : '🗺️ 2D'}
+          </button>
+        </div>
 
-      {/* 3D / 2D toggle */}
-      <div className="absolute top-3 right-14 z-10">
-        <button onClick={toggle3D}
-          className="h-9 px-3 bg-white/95 backdrop-blur-md rounded-xl shadow-md border border-black/8 text-[12px] font-bold text-[#1c1c1e] flex items-center gap-1.5">
-          {is3D ? '🏙️ 3D' : '🗺️ 2D'}
-        </button>
+        {/* Type icon buttons — hidden in sublease mode */}
+        <div className={`flex gap-2 ${mode === 'sublease' ? 'hidden' : ''}`}>
+          {([
+            { id: 'any' as const, label: 'Any', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg> },
+            { id: 'studio' as const, label: 'Studio', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M3 9h6M3 15h6M15 3v18M15 9h6M15 15h6"/></svg> },
+            { id: '1br' as const, label: '1BR', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg> },
+            { id: '2br+' as const, label: '2BR+', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M2 4h20v16H2z"/><path d="M12 4v16"/></svg> },
+          ] as const).map(t => (
+            <button key={t.id}
+              onClick={() => { setMapTypeFilter(t.id); setCardPage(0); }}
+              className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-md border transition-all ${
+                mapTypeFilter === t.id ? 'bg-[#1c1c1e] text-white border-[#1c1c1e]' : 'bg-white text-[#6c6a66] border-black/6 hover:text-[#1c1c1e]'
+              }`}
+              title={t.label}
+            >
+              {t.icon}
+            </button>
+          ))}
+        </div>
       </div>
 
+      {/* Pin overlay */}
+      <div className="absolute inset-0 pointer-events-none" style={{ zIndex: 5 }}>
+        {mode === 'sublease' ? (
+          /* ── Sublease pins (orange) ── */
+          pinPositions.map(pos => {
+            const s = subleasePins.find(p => p.id === pos.id);
+            if (!s) return null;
+            const isSelected = selectedId === s.id;
+            return (
+              <div
+                key={s.id}
+                ref={el => { if (el) pinElemsRef.current.set(s.id, el); else pinElemsRef.current.delete(s.id); }}
+                onClick={() => {
+                  setSelectedId(prev => prev === s.id ? null : s.id);
+                  const coords = coordsForPinsRef.current[s.id];
+                  if (coords && mapRef.current) {
+                    mapRef.current.flyTo({ center: coords, zoom: 16.5, pitch: 62, bearing: mapRef.current.getBearing(), duration: 700, essential: true });
+                  }
+                }}
+                style={{
+                  position: 'absolute', left: pos.x, top: pos.y,
+                  transform: `translate(-50%, -100%) ${isSelected ? 'scale(1.12)' : 'scale(1)'}`,
+                  zIndex: isSelected ? 20 : 10, cursor: 'pointer', pointerEvents: 'auto',
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', transition: 'transform 0.2s ease',
+                }}
+              >
+                {s.daysLeft <= 7 && !isSelected && (
+                  <span style={{ fontSize: 9, background: '#ef4444', color: 'white', fontWeight: 800, padding: '2px 7px', borderRadius: 20, marginBottom: 4, whiteSpace: 'nowrap' }}>{s.daysLeft}d left</span>
+                )}
+                <div style={{
+                  background: isSelected ? '#1c1c1e' : 'rgba(255,255,255,0.97)',
+                  color: isSelected ? 'white' : '#1c1c1e',
+                  borderRadius: 24, padding: '6px 13px',
+                  display: 'flex', alignItems: 'center', gap: 5,
+                  boxShadow: isSelected ? '0 6px 24px rgba(0,0,0,0.3)' : '0 2px 12px rgba(0,0,0,0.14)',
+                  border: isSelected ? 'none' : '1px solid rgba(0,0,0,0.08)',
+                  fontSize: 12, fontWeight: 800, whiteSpace: 'nowrap',
+                }}>
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke={isSelected ? 'white' : '#1c1c1e'} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                    <polyline points="9 22 9 12 15 12 15 22"/>
+                  </svg>
+                  <span>${s.price}/mo</span>
+                </div>
+                <div style={{ width: 2, height: 8, background: isSelected ? '#1c1c1e' : 'rgba(0,0,0,0.2)', marginTop: -1 }} />
+                <div style={{ width: 7, height: 7, borderRadius: '50%', background: isSelected ? '#1c1c1e' : '#9ca3af', border: '2px solid white', boxShadow: '0 1px 4px rgba(0,0,0,0.25)', marginTop: -1 }} />
+              </div>
+            );
+          })
+        ) : (
+          /* ── Rent pins (default) ── */
+          pinPositions.map(pos => {
+            const listing = listings.find(l => l.id === pos.id);
+            if (!listing) return null;
+            if (!typeFilteredListings.some(t => t.id === listing.id)) return null;
+            const isSelected = selectedId === listing.id;
+            const score = profile ? scores[listing.id] : 0;
+            const hasProfile = !!profile;
+            const isBestMatch = hasProfile && rankedListings[0]?.id === listing.id;
+            const dotColor = !hasProfile ? '#9ca3af' : score >= 80 ? '#22c55e' : score >= 60 ? '#f59e0b' : '#9ca3af';
+            return (
+              <div
+                key={listing.id}
+                ref={el => { if (el) pinElemsRef.current.set(listing.id, el); else pinElemsRef.current.delete(listing.id); }}
+                onClick={() => {
+                  setSelectedId(prev => prev === listing.id ? null : listing.id);
+                  const coords = listingCoords[listing.id];
+                  if (coords && mapRef.current) {
+                    mapRef.current.flyTo({ center: coords, zoom: 16.5, pitch: 62, bearing: mapRef.current.getBearing(), duration: 700, essential: true });
+                  }
+                }}
+                style={{
+                  position: 'absolute', left: pos.x, top: pos.y,
+                  transform: `translate(-50%, -100%) ${isSelected ? 'scale(1.12)' : 'scale(1)'}`,
+                  zIndex: isSelected ? 20 : 10, cursor: 'pointer', pointerEvents: 'auto',
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', transition: 'transform 0.2s ease',
+                }}
+              >
+                {isBestMatch && !isSelected && (
+                  <span style={{ fontSize: 9, background: '#22c55e', color: 'white', fontWeight: 800, padding: '2px 7px', borderRadius: 20, marginBottom: 4, whiteSpace: 'nowrap', display: 'block' }}>★ Best match</span>
+                )}
+                <div style={{
+                  background: isSelected ? '#1c1c1e' : 'rgba(255,255,255,0.97)',
+                  color: isSelected ? 'white' : '#1c1c1e',
+                  borderRadius: 24, padding: '6px 13px',
+                  display: 'flex', alignItems: 'center', gap: 5,
+                  boxShadow: isSelected ? '0 6px 24px rgba(0,0,0,0.3)' : '0 2px 12px rgba(0,0,0,0.14)',
+                  border: isSelected ? 'none' : '1px solid rgba(0,0,0,0.08)',
+                  fontSize: 12, fontWeight: 800, whiteSpace: 'nowrap',
+                }}>
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke={isSelected ? 'white' : '#1c1c1e'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                    <polyline points="9 22 9 12 15 12 15 22" />
+                  </svg>
+                  <span>${listing.price}/mo</span>
+                </div>
+                <div style={{ width: 2, height: 8, background: isSelected ? '#1c1c1e' : 'rgba(0,0,0,0.2)', marginTop: -1 }} />
+                <div style={{ width: 7, height: 7, borderRadius: '50%', background: isSelected ? '#1c1c1e' : dotColor, border: '2px solid white', boxShadow: '0 1px 4px rgba(0,0,0,0.25)', marginTop: -1 }} />
+              </div>
+            );
+          })
+        )}
+      </div>
+
+      {/* Floating detail card — FindPlace dark style */}
+      {selectedListing && (
+        <div style={{
+          position: 'absolute',
+          top: 130,
+          left: 16,
+          width: 300,
+          background: '#181818',
+          borderRadius: 24,
+          boxShadow: '0 16px 60px rgba(0,0,0,0.45)',
+          overflow: 'hidden',
+          zIndex: 30,
+          animation: 'cardIn 0.22s ease',
+        }}>
+          {/* Photo */}
+          <div style={{ position: 'relative', height: 168 }}>
+            <img src={selectedListing.img} alt={selectedListing.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(20,20,20,0.85) 0%, rgba(0,0,0,0.1) 50%, transparent 100%)' }} />
+
+            {/* Top badges */}
+            <div style={{ position: 'absolute', top: 12, left: 12, display: 'flex', gap: 6 }}>
+              {profile && (
+                <span style={{ fontSize: 11, fontWeight: 800, padding: '5px 10px', borderRadius: 20, background: selectedScore >= 80 ? '#22c55e' : selectedScore >= 60 ? '#f59e0b' : '#6b7280', color: 'white', display: 'flex', alignItems: 'center', gap: 4 }}>
+                  ★ {selectedScore}%
+                </span>
+              )}
+              <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${selectedListing.badgeColor}`}>{selectedListing.badge}</span>
+            </div>
+
+            {/* Close + 3D buttons */}
+            <div style={{ position: 'absolute', top: 12, right: 12, display: 'flex', gap: 6 }}>
+              <button
+                onClick={() => flyTo(selectedListing.id)}
+                style={{ width: 32, height: 32, background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(8px)', borderRadius: '50%', border: '1px solid rgba(255,255,255,0.2)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14 }}
+              >🏙️</button>
+              <button
+                onClick={() => setSelectedId(null)}
+                style={{ width: 32, height: 32, background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(8px)', borderRadius: '50%', border: '1px solid rgba(255,255,255,0.2)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: 18, fontWeight: 300, lineHeight: 1 }}
+              >×</button>
+            </div>
+          </div>
+
+          {/* Dark content body */}
+          <div style={{ padding: '14px 16px 16px' }}>
+            <p style={{ fontWeight: 800, fontSize: 17, color: 'white', lineHeight: 1.2, marginBottom: 4 }}>{selectedListing.name}</p>
+            <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)', marginBottom: 10 }}>{selectedListing.address}</p>
+
+            <p style={{ fontSize: 20, fontWeight: 900, color: 'white', letterSpacing: '-0.5px', marginBottom: 12 }}>
+              ${selectedListing.price}<span style={{ fontSize: 12, fontWeight: 400, color: 'rgba(255,255,255,0.45)' }}>/month</span>
+            </p>
+
+            {/* Specs row — icon style */}
+            <div style={{ display: 'flex', gap: 14, marginBottom: 12, flexWrap: 'wrap' }}>
+              <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.6)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                {selectedListing.beds}
+              </span>
+              <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.6)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/></svg>
+                {selectedListing.sqft}
+              </span>
+              {activeCollege && (
+                <span style={{ fontSize: 11, color: '#818cf8', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#818cf8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                  {selectedListing.walkFrom[activeCollege.id]}m walk
+                </span>
+              )}
+            </div>
+
+            {/* Match reasons */}
+            {profile && selectedReasons.length > 0 && (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginBottom: 14 }}>
+                {selectedReasons.slice(0, 3).map((r, i) => (
+                  <span key={i} style={{ fontSize: 10, fontWeight: 700, padding: '4px 8px', borderRadius: 20, background: r.ok ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)', color: r.ok ? '#4ade80' : '#f87171' }}>
+                    {r.ok ? '✓' : '✗'} {r.text}
+                  </span>
+                ))}
+              </div>
+            )}
+
+            {/* Description snippet */}
+            <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', lineHeight: 1.5, marginBottom: 14 }}>
+              {selectedListing.amenities.slice(0, 3).join(' · ')} · and more amenities included.{' '}
+              <span style={{ color: 'rgba(255,255,255,0.6)', cursor: 'pointer' }}>see details</span>
+            </p>
+
+            {/* CTA */}
+            <button
+              onClick={() => onViewListing(selectedListing.id, profile?.college?.id ?? selectedCollege?.id)}
+              style={{ width: '100%', height: 42, background: 'white', color: '#1c1c1e', borderRadius: 14, border: 'none', fontSize: 13, fontWeight: 800, cursor: 'pointer', letterSpacing: '-0.2px' }}
+            >
+              View details →
+            </button>
+          </div>
+        </div>
+      )}
+
+
+      {/* Sublease floating detail card */}
+      {mode === 'sublease' && (() => {
+        const s = subleasePins.find(p => p.id === selectedId);
+        if (!s) return null;
+        return (
+          <div style={{
+            position: 'absolute', top: 130, left: 16, width: 300,
+            background: '#181818', borderRadius: 24,
+            boxShadow: '0 16px 60px rgba(0,0,0,0.45)',
+            overflow: 'hidden', zIndex: 30, animation: 'cardIn 0.22s ease',
+          }}>
+            {/* Photo */}
+            <div style={{ position: 'relative', height: 160 }}>
+              <img src={s.img} alt={s.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(20,20,20,0.9) 0%, rgba(0,0,0,0.1) 55%, transparent 100%)' }} />
+              {/* Badges */}
+              <div style={{ position: 'absolute', top: 12, left: 12, display: 'flex', gap: 6, alignItems: 'center' }}>
+                <span style={{ fontSize: 10, fontWeight: 800, padding: '4px 9px', borderRadius: 20, background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(6px)', color: 'white', border: '1px solid rgba(255,255,255,0.2)' }}>
+                  {s.period}
+                </span>
+                {s.daysLeft <= 7 && (
+                  <span style={{ fontSize: 10, fontWeight: 800, padding: '4px 9px', borderRadius: 20, background: '#ef4444', color: 'white' }}>{s.daysLeft}d left</span>
+                )}
+              </div>
+              {/* Close */}
+              <button onClick={() => setSelectedId(null)}
+                style={{ position: 'absolute', top: 12, right: 12, width: 32, height: 32, background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(8px)', borderRadius: '50%', border: '1px solid rgba(255,255,255,0.2)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: 18, fontWeight: 300, lineHeight: 1 }}>×</button>
+              {/* Price over photo bottom */}
+              <div style={{ position: 'absolute', bottom: 12, left: 14 }}>
+                <span style={{ fontSize: 22, fontWeight: 900, color: 'white', letterSpacing: '-0.5px' }}>${s.price}</span>
+                <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', fontWeight: 400 }}>/mo</span>
+              </div>
+            </div>
+
+            {/* Body */}
+            <div style={{ padding: '12px 16px 16px' }}>
+              <p style={{ fontWeight: 800, fontSize: 15, color: 'white', lineHeight: 1.2, marginBottom: 3 }}>{s.name}</p>
+              <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginBottom: 10 }}>{s.address}</p>
+
+              {/* Available dates */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10, padding: '8px 12px', background: 'rgba(255,255,255,0.06)', borderRadius: 12 }}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.75)', fontWeight: 600 }}>{s.available}</span>
+              </div>
+
+              {/* Specs */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12, flexWrap: 'wrap' }}>
+                <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.55)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                  {s.beds}
+                </span>
+                <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.55)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+                  {s.sqft}
+                </span>
+                {s.furnished && (
+                  <span style={{ fontSize: 10, fontWeight: 700, padding: '3px 8px', borderRadius: 20, background: 'rgba(251,191,36,0.15)', color: '#fbbf24', border: '1px solid rgba(251,191,36,0.2)' }}>Furnished</span>
+                )}
+              </div>
+
+              {/* Poster */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14, padding: '9px 12px', background: 'rgba(255,255,255,0.05)', borderRadius: 12, border: '1px solid rgba(255,255,255,0.08)' }}>
+                <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'rgba(255,255,255,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 800, color: 'white', flexShrink: 0 }}>
+                  {s.postedBy[0]}
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ fontSize: 12, fontWeight: 700, color: 'white', marginBottom: 1 }}>{s.postedBy}</p>
+                  <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)' }}>Posted by student · UIUC</p>
+                </div>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+              </div>
+
+              {/* CTAs */}
+              <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+                <button
+                  onClick={() => onMessagePoster?.(s)}
+                  style={{ flex: 1, height: 42, background: 'white', color: '#1c1c1e', borderRadius: 14, border: 'none', fontSize: 13, fontWeight: 800, cursor: 'pointer' }}
+                >
+                  Message {s.postedBy.split(' ')[0]} →
+                </button>
+                <button style={{ width: 42, height: 42, background: 'rgba(255,255,255,0.08)', borderRadius: 14, border: '1px solid rgba(255,255,255,0.1)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                </button>
+              </div>
+              <button
+                onClick={() => onViewSubleaseDetail?.(s.id)}
+                style={{ width: '100%', height: 36, background: 'transparent', color: 'rgba(255,255,255,0.5)', borderRadius: 12, border: '1px solid rgba(255,255,255,0.1)', fontSize: 12, fontWeight: 600, cursor: 'pointer', letterSpacing: 0 }}
+              >
+                See full details
+              </button>
+            </div>
+          </div>
+        );
+      })()}
+
       {/* Walk radius legend */}
-      {(profile?.college || selectedCollege) && (
-        <div className="absolute bottom-[220px] left-3 pointer-events-none">
+      {activeCollege && (
+        <div className="absolute bottom-[180px] left-3 pointer-events-none" style={{ zIndex: 10 }}>
           <div className="bg-white/90 backdrop-blur-md px-2.5 py-1.5 rounded-xl shadow-md border border-black/8 flex items-center gap-1.5">
             <div className="w-2.5 h-2.5 rounded-full border-2 border-dashed border-indigo-500 bg-indigo-50" />
             <span className="text-[10px] font-semibold text-[#1c1c1e]">10 min walk</span>
@@ -312,157 +694,8 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
         </div>
       )}
 
-      {/* ── Bottom panel ── */}
-      <div className="bg-white border-t border-black/6 flex-shrink-0">
-        <div className="pt-3" />
-
-        {/* No listing selected → guided tour or card strip */}
-        {!selectedListing && (
-          <div className="pb-[80px]">
-            {profile ? (
-              <>
-                {/* "Best matches for you" header */}
-                <div className="px-4 mb-2.5 flex items-center justify-between">
-                  <div>
-                    <p className="text-[13px] font-bold text-[#1c1c1e]">
-                      {rankedListings.filter(l => scores[l.id] >= 65).length} great matches for you
-                    </p>
-                    <div className="flex items-center gap-2 mt-0.5">
-                      <p className="text-[11px] text-[#6c6a66]">Ranked by your profile · tap to fly to</p>
-                      <button
-                        onClick={() => { setSelectedId(null); onReset(); }}
-                        className="text-[10px] font-semibold text-red-500 underline underline-offset-2">
-                        Reset
-                      </button>
-                    </div>
-                  </div>
-                  {/* Guided tour buttons */}
-                  <div className="flex items-center gap-1.5">
-                    <button onClick={() => goToGuide(Math.max(0, guideIdx - 1))}
-                      disabled={guideIdx === 0}
-                      className="w-8 h-8 rounded-full bg-[#f0efe9] flex items-center justify-center disabled:opacity-30">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1c1c1e" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-                    </button>
-                    <span className="text-[11px] font-semibold text-[#6c6a66]">{guideIdx + 1}/{rankedListings.length}</span>
-                    <button onClick={() => goToGuide(Math.min(rankedListings.length - 1, guideIdx + 1))}
-                      disabled={guideIdx >= rankedListings.length - 1}
-                      className="w-8 h-8 rounded-full bg-[#f0efe9] flex items-center justify-center disabled:opacity-30">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1c1c1e" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-                    </button>
-                  </div>
-                </div>
-                {/* Ranked card strip */}
-                <div className="flex gap-2.5 overflow-x-auto scrollbar-hide px-4">
-                  {rankedListings.map((l, i) => {
-                    const s = scores[l.id];
-                    const color = s >= 80 ? 'bg-green-100 text-green-700' : s >= 60 ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-500';
-                    return (
-                      <button key={l.id}
-                        onClick={() => { setSelectedId(l.id); flyTo(l.id); setGuideIdx(i); }}
-                        className={`flex-shrink-0 flex items-center gap-2.5 rounded-2xl px-3 py-2.5 border-2 transition-all ${
-                          guideIdx === i && selectedId === l.id ? 'border-[#1c1c1e] bg-white shadow-md' : 'border-transparent bg-[#f7f6f2]'
-                        }`}>
-                        <div className="relative">
-                          <img src={l.img} className="w-12 h-12 rounded-xl object-cover" />
-                          {i === 0 && <span className="absolute -top-1 -right-1 text-[10px]">★</span>}
-                        </div>
-                        <div className="text-left">
-                          <div className="flex items-center gap-1.5">
-                            <p className="text-[13px] font-bold text-[#1c1c1e]">${l.price}/mo</p>
-                            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${color}`}>{s}%</span>
-                          </div>
-                          <p className="text-[11px] text-[#6c6a66] max-w-[100px] truncate">{l.name}</p>
-                          {profile.college && (
-                            <p className="text-[10px] text-indigo-600 font-semibold">{l.walkFrom[profile.college.id]}m walk</p>
-                          )}
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              </>
-            ) : (
-              <div className="px-4 pb-1">
-                <p className="text-[12px] text-[#6c6a66] mb-2.5">{listings.length} listings</p>
-                <div className="flex gap-2.5 overflow-x-auto scrollbar-hide">
-                  {listings.map(l => (
-                    <button key={l.id} onClick={() => { setSelectedId(l.id); flyTo(l.id); }}
-                      className="flex-shrink-0 flex items-center gap-2.5 bg-[#f7f6f2] rounded-2xl px-3 py-2.5 border border-black/5">
-                      <img src={l.img} className="w-10 h-10 rounded-xl object-cover" />
-                      <div className="text-left">
-                        <p className="text-[13px] font-bold text-[#1c1c1e]">${l.price}/mo</p>
-                        <p className="text-[11px] text-[#6c6a66] max-w-[110px] truncate">{l.name}</p>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Listing selected → detail with match reasons */}
-        {selectedListing && (
-          <div className="px-4 pb-[80px]">
-            <div className="flex gap-3 items-start">
-              <img src={selectedListing.img} className="w-20 h-20 rounded-2xl object-cover flex-shrink-0" />
-              <div className="flex-1 min-w-0">
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <p className="text-[20px] font-bold text-[#1c1c1e] leading-tight">
-                      ${selectedListing.price}<span className="text-[13px] font-normal text-[#6c6a66]">/mo</span>
-                    </p>
-                    <p className="text-[14px] font-semibold text-[#1c1c1e] mt-0.5">{selectedListing.name}</p>
-                  </div>
-                  <div className="flex items-center gap-1.5 flex-shrink-0">
-                    {profile && (
-                      <span className={`text-[12px] font-black px-2.5 py-1 rounded-full ${
-                        selectedScore >= 80 ? 'bg-green-100 text-green-700' :
-                        selectedScore >= 60 ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-500'
-                      }`}>
-                        {scoreLabel(selectedScore)} {selectedScore}%
-                      </span>
-                    )}
-                    <button onClick={() => setSelectedId(null)}
-                      className="w-7 h-7 rounded-full bg-[#f0efe9] flex items-center justify-center text-[#6c6a66] text-lg leading-none">×</button>
-                  </div>
-                </div>
-
-                {/* Match reasons */}
-                {profile && selectedReasons.length > 0 && (
-                  <div className="flex gap-1.5 mt-2 flex-wrap">
-                    {selectedReasons.map((r, i) => (
-                      <span key={i} className={`text-[10px] font-semibold px-2 py-0.5 rounded-full flex items-center gap-1 ${
-                        r.ok ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-600'
-                      }`}>
-                        {r.ok ? '✓' : '✗'} {r.text}
-                      </span>
-                    ))}
-                  </div>
-                )}
-
-                {!profile && (
-                  <div className="flex gap-1.5 mt-2 flex-wrap">
-                    <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${selectedListing.badgeColor}`}>{selectedListing.badge}</span>
-                    <span className="text-[11px] px-2 py-0.5 rounded-full bg-[#f0efe9] text-[#1c1c1e]">{selectedListing.beds}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="flex gap-2 mt-3">
-              <button onClick={() => onViewListing(selectedListing.id, profile?.college?.id ?? selectedCollege?.id)}
-                className="flex-1 h-11 bg-[#1c1c1e] rounded-xl text-white text-[14px] font-semibold">
-                View details
-              </button>
-              <button onClick={() => flyTo(selectedListing.id)}
-                className="h-11 px-4 rounded-xl border border-black/12 text-[14px] font-semibold text-[#1c1c1e]">
-                🏙️ Fly to
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
+      {/* Bottom card strip — hidden in sublease mode (cards shown in left panel) */}
+      {mode !== 'sublease' && renderBottomStrip()}
     </div>
   );
 }
