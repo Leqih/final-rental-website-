@@ -567,6 +567,7 @@ export default function WebExploreScreen({ onViewListing: _onViewListing, onNavi
                       </div>
                     </label>
                   </div>
+                  <p className="text-[11px] text-[#9ca3af] text-right">→ <span className="font-semibold text-[#1c1c1e]">{filtered.length}</span> listing{filtered.length !== 1 ? 's' : ''} match</p>
                 </div>
 
                 {/* Area */}

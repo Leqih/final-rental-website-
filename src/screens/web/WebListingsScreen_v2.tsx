@@ -495,6 +495,7 @@ export default function WebListingsScreen({ onViewListing, savedIds: savedIdsPro
                       <button key={c} onClick={() => { setPriceMin(500); setPriceMaxVal(c) }} className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all ${priceMin === 500 && priceMax === c ? 'bg-[#1c1c1e] text-white' : 'bg-white text-[#6c6a66] border border-[#e5e4e0] hover:border-[#1c1c1e]'}`}>≤${c}</button>
                     ))}
                   </div>
+                  <span className="text-[11px] text-[#9ca3af]">→ <span className="font-semibold text-[#1c1c1e]">{sortedRent.length}</span> listing{sortedRent.length !== 1 ? 's' : ''} match</span>
                 </div>
               </div>
 
