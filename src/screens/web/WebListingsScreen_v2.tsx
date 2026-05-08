@@ -513,16 +513,15 @@ export default function WebListingsScreen({ onViewListing, savedIds: savedIdsPro
               {/* Amenities */}
               <div className="flex items-start gap-3">
                 <span className="text-[12px] font-semibold text-[#6c6a66] w-16 flex-shrink-0 mt-1">Amenities</span>
-                <div className="flex gap-2 flex-wrap">
-                  {amenityOptions.map(a => {
-                    const active = amenities.has(a.key)
-                    return (
-                      <button key={a.key} onClick={() => toggleAmenity(a.key)} className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-[13px] font-semibold transition-all ${active ? 'bg-[#1c1c1e] text-white' : 'bg-white text-[#6c6a66] border border-[#e5e4e0] hover:border-[#1c1c1e] hover:text-[#1c1c1e]'}`}>
-                        {active && <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>}
-                        {a.label}
+                <div className="flex-1 space-y-3">
+                  {amenityOptions.map(a => (
+                    <div key={a.key} className="flex items-center justify-between">
+                      <span className="text-[13px] text-[#1c1c1e]">{a.label}</span>
+                      <button onClick={() => toggleAmenity(a.key)} className={`w-11 h-6 rounded-full relative transition-colors flex-shrink-0 ${amenities.has(a.key) ? 'bg-[#1c1c1e]' : 'bg-[#e5e4e0]'}`}>
+                        <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform ${amenities.has(a.key) ? 'translate-x-[22px]' : 'translate-x-0.5'}`} />
                       </button>
-                    )
-                  })}
+                    </div>
+                  ))}
                 </div>
               </div>
 
