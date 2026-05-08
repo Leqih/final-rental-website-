@@ -263,8 +263,24 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
   const pageCards = allCards.slice(cardPage * PAGE, cardPage * PAGE + PAGE);
 
   const renderBottomStrip = () => (
-    <div className="absolute bottom-0 left-0 right-0 pb-3 pt-2" style={{ zIndex: 15 }}>
-      <div className="flex items-stretch px-4 relative">
+    <div className="absolute bottom-0 left-0 right-0 pb-3" style={{ zIndex: 15 }}>
+      {/* Nav row — sits above the cards, right-aligned, 20px gap below */}
+      <div className="flex justify-end items-center px-6 pt-2 pb-5 gap-1.5">
+        {profile && (
+          <button onClick={() => { setSelectedId(null); onReset(); setCardPage(0); }} className="h-8 px-2.5 rounded-xl bg-red-50 text-red-500 text-[10px] font-semibold mr-1">Reset</button>
+        )}
+        <button onClick={() => setCardPage(p => Math.max(0, p - 1))} disabled={cardPage === 0}
+          className="w-8 h-8 rounded-xl bg-[#f5f4f0] border border-[#e8e7e3] flex items-center justify-center disabled:opacity-30 hover:bg-[#ebe9e4] transition-colors">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#1c1c1e" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <button onClick={() => setCardPage(p => Math.min(totalPages - 1, p + 1))} disabled={cardPage >= totalPages - 1}
+          className="w-8 h-8 rounded-xl bg-[#f5f4f0] border border-[#e8e7e3] flex items-center justify-center disabled:opacity-30 hover:bg-[#ebe9e4] transition-colors">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#1c1c1e" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+      </div>
+
+      {/* Cards row */}
+      <div className="flex items-stretch px-4">
         {pageCards.map((l, pi) => {
           const i = cardPage * PAGE + pi;
           const s = profile ? scores[l.id] : 0;
@@ -316,21 +332,6 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
             </button>
           );
         })}
-
-        {/* Arrow nav */}
-        <div className="absolute right-4 bottom-3 flex gap-1.5 items-center">
-          {profile && (
-            <button onClick={() => { setSelectedId(null); onReset(); setCardPage(0); }} className="h-8 px-2.5 rounded-xl bg-red-50 text-red-500 text-[10px] font-semibold mr-1">Reset</button>
-          )}
-          <button onClick={() => setCardPage(p => Math.max(0, p - 1))} disabled={cardPage === 0}
-            className="w-8 h-8 rounded-xl bg-[#f5f4f0] border border-[#e8e7e3] flex items-center justify-center disabled:opacity-30 hover:bg-[#ebe9e4] transition-colors">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#1c1c1e" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-          </button>
-          <button onClick={() => setCardPage(p => Math.min(totalPages - 1, p + 1))} disabled={cardPage >= totalPages - 1}
-            className="w-8 h-8 rounded-xl bg-[#f5f4f0] border border-[#e8e7e3] flex items-center justify-center disabled:opacity-30 hover:bg-[#ebe9e4] transition-colors">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#1c1c1e" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-          </button>
-        </div>
       </div>
     </div>
   );
