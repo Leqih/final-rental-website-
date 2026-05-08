@@ -103,7 +103,7 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
       bearing: -20,
     } as maplibregl.MapOptions);
 
-    map.addControl(new maplibregl.NavigationControl({ showCompass: true, visualizePitch: true }), 'bottom-left');
+    map.addControl(new maplibregl.NavigationControl({ showCompass: true, visualizePitch: true }), 'top-right');
 
     const movePinsDirect = () => {
       pinElemsRef.current.forEach((el, id) => {
@@ -342,7 +342,7 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
 
   return (
     <div className="relative flex-1 overflow-hidden flex flex-col">
-      <style>{`@keyframes cardIn { from { opacity:0;transform:translateY(-8px) scale(0.97); } to { opacity:1;transform:translateY(0) scale(1); } }`}</style>
+      <style>{`@keyframes cardIn { from { opacity:0;transform:translateY(-8px) scale(0.97); } to { opacity:1;transform:translateY(0) scale(1); } } .maplibregl-ctrl-top-right { margin-top: 128px !important; }`}</style>
 
       <div ref={containerRef} className="flex-1" />
 
