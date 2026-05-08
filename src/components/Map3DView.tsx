@@ -17,6 +17,11 @@ const listingCoords: Record<number, [number, number]> = {
   6: [-88.2318, 40.1052],
   7: [-88.2338, 40.1082],
   8: [-88.2255, 40.1018],
+  // Green Street 2B2B listings
+  9:  [-88.2252, 40.1092], // Green & Fourth Flats  – 408 E Green St
+  10: [-88.2261, 40.1094], // Green & Third Apartments – 405 E Green St
+  11: [-88.2215, 40.1088], // Sixth Street Commons – 601 E Green St
+  12: [-88.2310, 40.1096], // Green Terrace Co-Living – 209 E Green St
 };
 
 function walkRadiusMeters(mins: number) { return mins * 83; }
