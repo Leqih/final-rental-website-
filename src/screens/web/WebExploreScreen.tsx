@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useRef } from 'react'
 import { listings } from '../../data/listings'
 import Map3DView from '../../components/Map3DView'
 import WebListingDetailScreen from './WebListingDetailScreen'
@@ -200,9 +200,8 @@ export default function WebExploreScreen({ onViewListing: _onViewListing, onNavi
   const [priceMax, setPriceMax] = useState(1100)
   const [minInput, setMinInput] = useState('500')
   const [maxInput, setMaxInput] = useState('1100')
-  // Keep local inputs in sync when slider changes
-  useEffect(() => setMinInput(String(priceMin)), [priceMin])
-  useEffect(() => setMaxInput(String(priceMax)), [priceMax])
+  const minDebounce = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const maxDebounce = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [amenities, setAmenities] = useState<Set<string>>(new Set())
 
   // Sublease filters
@@ -535,11 +534,11 @@ export default function WebExploreScreen({ onViewListing: _onViewListing, onNavi
                   <div className="relative h-1.5 bg-[#e8e7e3] rounded-full mb-4 mx-1">
                     <div className="absolute h-full bg-[#1c1c1e] rounded-full" style={{ left: `${((priceMin - 500) / 700) * 100}%`, right: `${100 - ((priceMax - 500) / 700) * 100}%` }} />
                     <input type="range" min={500} max={1200} step={25} value={priceMin}
-                      onChange={e => setPriceMin(Math.min(Number(e.target.value), priceMax - 50))}
+                      onChange={e => { const v = Math.min(Number(e.target.value), priceMax - 50); setPriceMin(v); setMinInput(String(v)) }}
                       className="absolute inset-0 w-full opacity-0 cursor-pointer h-full"
                       style={{ zIndex: ((priceMax - priceMin) / 700) < 0.15 ? 5 : 2 }} />
                     <input type="range" min={500} max={1200} step={25} value={priceMax}
-                      onChange={e => setPriceMax(Math.max(Number(e.target.value), priceMin + 50))}
+                      onChange={e => { const v = Math.max(Number(e.target.value), priceMin + 50); setPriceMax(v); setMaxInput(String(v)) }}
                       className="absolute inset-0 w-full opacity-0 cursor-pointer h-full"
                       style={{ zIndex: ((priceMax - priceMin) / 700) < 0.15 ? 2 : 3 }} />
                     <div className="absolute top-1/2 -translate-y-1/2 w-4 h-4 bg-white border-2 border-[#1c1c1e] rounded-full shadow-md pointer-events-none" style={{ left: `calc(${((priceMin - 500) / 700) * 100}% - 8px)` }} />
@@ -554,8 +553,16 @@ export default function WebExploreScreen({ onViewListing: _onViewListing, onNavi
                         <input
                           type="number" min={500} max={priceMax - 50} step={25}
                           value={minInput}
-                          onChange={e => setMinInput(e.target.value)}
+                          onChange={e => {
+                            setMinInput(e.target.value)
+                            if (minDebounce.current) clearTimeout(minDebounce.current)
+                            minDebounce.current = setTimeout(() => {
+                              const v = Math.min(Math.max(parseInt(e.target.value) || 500, 500), priceMax - 50)
+                              setPriceMin(v); setMinInput(String(v))
+                            }, 350)
+                          }}
                           onBlur={() => {
+                            if (minDebounce.current) clearTimeout(minDebounce.current)
                             const v = Math.min(Math.max(parseInt(minInput) || 500, 500), priceMax - 50)
                             setPriceMin(v); setMinInput(String(v))
                           }}
@@ -570,8 +577,16 @@ export default function WebExploreScreen({ onViewListing: _onViewListing, onNavi
                         <input
                           type="number" min={priceMin + 50} max={2000} step={25}
                           value={maxInput}
-                          onChange={e => setMaxInput(e.target.value)}
+                          onChange={e => {
+                            setMaxInput(e.target.value)
+                            if (maxDebounce.current) clearTimeout(maxDebounce.current)
+                            maxDebounce.current = setTimeout(() => {
+                              const v = Math.max(Math.min(parseInt(e.target.value) || 1100, 2000), priceMin + 50)
+                              setPriceMax(v); setMaxInput(String(v))
+                            }, 350)
+                          }}
                           onBlur={() => {
+                            if (maxDebounce.current) clearTimeout(maxDebounce.current)
                             const v = Math.max(Math.min(parseInt(maxInput) || 1100, 2000), priceMin + 50)
                             setPriceMax(v); setMaxInput(String(v))
                           }}
