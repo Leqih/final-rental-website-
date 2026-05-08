@@ -66,9 +66,10 @@ interface Props {
   highlightPinId?: number | null;
   onMessagePoster?: (pin: SubleasePin) => void;
   onViewSubleaseDetail?: (id: number) => void;
+  onPinSelect?: (id: number | null) => void;
 }
 
-export default function Map3DView({ selectedCollege, profile, onViewListing, onReset, mode = 'rent', subleasePins = [], highlightPinId, onMessagePoster, onViewSubleaseDetail }: Props) {
+export default function Map3DView({ selectedCollege, profile, onViewListing, onReset, mode = 'rent', subleasePins = [], highlightPinId, onMessagePoster, onViewSubleaseDetail, onPinSelect }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const buildingMarkerRef = useRef<maplibregl.Marker | null>(null);
@@ -406,7 +407,9 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
                 key={s.id}
                 ref={el => { if (el) pinElemsRef.current.set(s.id, el); else pinElemsRef.current.delete(s.id); }}
                 onClick={() => {
-                  setSelectedId(prev => prev === s.id ? null : s.id);
+                  const next = selectedId === s.id ? null : s.id;
+                  setSelectedId(next);
+                  onPinSelect?.(next);
                   const coords = coordsForPinsRef.current[s.id];
                   if (coords && mapRef.current) {
                     mapRef.current.flyTo({ center: coords, zoom: 16.5, pitch: 62, bearing: mapRef.current.getBearing(), duration: 700, essential: true });
@@ -458,7 +461,9 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
                 key={listing.id}
                 ref={el => { if (el) pinElemsRef.current.set(listing.id, el); else pinElemsRef.current.delete(listing.id); }}
                 onClick={() => {
-                  setSelectedId(prev => prev === listing.id ? null : listing.id);
+                  const next = selectedId === listing.id ? null : listing.id;
+                  setSelectedId(next);
+                  onPinSelect?.(next);
                   const coords = listingCoords[listing.id];
                   if (coords && mapRef.current) {
                     mapRef.current.flyTo({ center: coords, zoom: 16.5, pitch: 62, bearing: mapRef.current.getBearing(), duration: 700, essential: true });

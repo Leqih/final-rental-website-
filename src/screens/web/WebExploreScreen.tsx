@@ -859,6 +859,10 @@ export default function WebExploreScreen({ onViewListing: _onViewListing, onNavi
             setMessageTarget(pin)
           }}
           onViewSubleaseDetail={(id) => setLocalSubleaseId(id)}
+          onPinSelect={(id) => {
+            if (id) window.location.hash = mode === 'sublease' ? `explore/sublease/${id}` : `explore/${id}`;
+            else window.location.hash = mode === 'sublease' ? 'explore/sublease' : 'explore';
+          }}
         />
       </div>
     </div>
