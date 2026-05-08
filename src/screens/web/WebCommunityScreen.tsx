@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 const flairs = [
   { id: 'advice',   label: 'Advice' },
@@ -82,7 +82,12 @@ const sampleComments: Record<number, { author: string; text: string; time: strin
   ],
 }
 
-export default function WebCommunityScreen() {
+interface CommunityProps {
+  initialSearch?: string
+  onSearchConsumed?: () => void
+}
+
+export default function WebCommunityScreen({ initialSearch = '', onSearchConsumed }: CommunityProps) {
   const [sort, setSort] = useState<SortOption>('Hot')
   const [activeFlair, setActiveFlair] = useState<string | null>(null)
   const [votes, setVotes] = useState<Record<number, number>>(Object.fromEntries(posts.map(p => [p.id, p.votes])))
@@ -96,7 +101,11 @@ export default function WebCommunityScreen() {
   const [toast, setToast] = useState<string | null>(null)
   const [menuOpen, setMenuOpen] = useState<number | null>(null)
   const [postSuccess, setPostSuccess] = useState(false)
-  const [searchQuery, setSearchQuery] = useState('')
+  const [searchQuery, setSearchQuery] = useState(initialSearch)
+
+  useEffect(() => {
+    if (initialSearch) { setSearchQuery(initialSearch); onSearchConsumed?.() }
+  }, [initialSearch])
 
   const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 2500) }
 

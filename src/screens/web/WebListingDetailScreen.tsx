@@ -38,6 +38,48 @@ const listingReviews: Record<number, { author: string; college: string; semester
   8: [{ author: 'Jake H.', college: 'ACES', semester: 'Spring 2025', rating: 5, text: 'Perfect for a grad student. Huge yard, parking included, management is on-site.' }, { author: 'Mia L.', college: 'Media', semester: 'Fall 2024', rating: 4, text: 'Spacious place near the research park. Pet-friendly and the yard is great for my dog.' }],
 }
 
+// Neighborhood → community search query + relevant post previews
+const neighborhoodCommunity: Record<string, {
+  searchQuery: string
+  posts: { title: string; author: string; flair: string; preview: string; votes: number }[]
+}> = {
+  first: {
+    searchQuery: 'First St',
+    posts: [
+      { title: 'Best streets for Grainger students? First St vs. Green St vs. Chalmers', author: 'Emma_W', flair: 'Advice', preview: 'First St seems close but is it worth the price premium? Green St seems fun but noisy. Chalmers feels off the beaten path…', votes: 124 },
+      { title: 'Green Street Properties landlord review — 4/5 stars', author: 'Alex_R', flair: 'Reviews', preview: 'Lived at The Dean Apartments for 2 years. Maintenance is fast, usually same day. Lease renewal process is painless…', votes: 45 },
+    ],
+  },
+  green: {
+    searchQuery: 'Green Street',
+    posts: [
+      { title: 'HERE Champaign noise levels on weekends — honest review after 1 year', author: 'Priya_K', flair: 'Building Talk', preview: 'It\'s loud Friday and Saturday nights, especially floors 3–7. That said, the amenities (pool, study pods) are legitimately good…', votes: 88 },
+      { title: 'South Champaign vs. Green Street — honest pros/cons after living in both', author: 'Jordan_L', flair: 'Area Insight', preview: 'Green St: walkable, social, expensive, noisy. South Campus: cheaper, quieter, need a bike…', votes: 67 },
+    ],
+  },
+  chalmers: {
+    searchQuery: 'Chalmers',
+    posts: [
+      { title: 'Best streets for Grainger students? First St vs. Green St vs. Chalmers', author: 'Emma_W', flair: 'Advice', preview: 'Chalmers feels off the beaten path. Would love to hear from people who\'ve lived in each area…', votes: 124 },
+      { title: 'South Champaign vs. Green Street — honest pros/cons after living in both', author: 'Jordan_L', flair: 'Area Insight', preview: 'Undergrads who want the college experience — Green St is worth it. For quiet and cheap, Chalmers is underrated…', votes: 67 },
+    ],
+  },
+  south: {
+    searchQuery: 'South Campus',
+    posts: [
+      { title: 'South Champaign vs. Green Street — honest pros/cons after living in both', author: 'Jordan_L', flair: 'Area Insight', preview: 'South Campus: cheaper, quieter, need a bike. For grad students South is better…', votes: 67 },
+      { title: 'How early should I start looking for fall 2026 apartments?', author: 'Shawn_P', flair: 'Advice', preview: 'I keep hearing that Champaign apartments go fast. Are there still decent options in January/February?', votes: 93 },
+    ],
+  },
+  quad: {
+    searchQuery: 'Quad',
+    posts: [
+      { title: 'How early should I start looking for fall 2026 apartments?', author: 'Shawn_P', flair: 'Advice', preview: 'I keep hearing that Champaign apartments go fast. Is it really necessary to sign a lease in October for August move-in?', votes: 93 },
+      { title: 'Best streets for Grainger students? First St vs. Green St vs. Chalmers', author: 'Emma_W', flair: 'Advice', preview: 'Engineering quad is my main building. First St seems close but is it worth the price premium?', votes: 124 },
+    ],
+  },
+}
+
 const tourDates = [
   { label: 'Mon', date: 'Apr 7' }, { label: 'Tue', date: 'Apr 8' },
   { label: 'Wed', date: 'Apr 9' }, { label: 'Thu', date: 'Apr 10' },
@@ -50,7 +92,7 @@ interface Props {
   listing: Listing
   onBack: () => void
   selectedCollegeId?: string | null
-  onNavigate?: (tab: string) => void
+  onNavigate?: (tab: string, search?: string) => void
   onViewOnMap?: (id: number) => void
 }
 
@@ -434,17 +476,43 @@ export default function WebListingDetailScreen({ listing, onBack, selectedColleg
                   </div>
                 </div>
               ))}
-              <button onClick={() => onNavigate?.('community')}
-                className="w-full bg-[#1c1c1e] rounded-2xl p-4 flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center flex-shrink-0">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                </div>
-                <div className="flex-1 text-left">
-                  <p className="text-[13px] font-semibold text-white">Discuss this building</p>
-                  <p className="text-[11px] text-white/50">See community threads →</p>
-                </div>
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-              </button>
+              {/* Community preview block */}
+              {(() => {
+                const ctx = neighborhoodCommunity[listing.neighborhood]
+                if (!ctx) return null
+                return (
+                  <div className="rounded-2xl border border-[#e5e4e0] overflow-hidden">
+                    {/* Header */}
+                    <div className="flex items-center justify-between px-4 py-3 bg-[#f9f8f6] border-b border-[#e5e4e0]">
+                      <div className="flex items-center gap-2">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1c1c1e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                        <p className="text-[12px] font-bold text-[#1c1c1e]">What students say about this area</p>
+                      </div>
+                      <span className="text-[10px] font-semibold text-[#6c6a66] bg-[#e5e4e0] px-2 py-0.5 rounded-full">{ctx.posts.length} threads</span>
+                    </div>
+                    {/* Post previews */}
+                    {ctx.posts.map((p, i) => (
+                      <div key={i} className={`px-4 py-3 ${i < ctx.posts.length - 1 ? 'border-b border-[#f0efeb]' : ''}`}>
+                        <div className="flex items-center gap-1.5 mb-1">
+                          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#f5f4f0] text-[#6c6a66]">{p.flair}</span>
+                          <span className="text-[10px] text-[#9ca3af]">u/{p.author}</span>
+                          <span className="text-[10px] text-[#9ca3af] ml-auto">▲ {p.votes}</span>
+                        </div>
+                        <p className="text-[12px] font-semibold text-[#1c1c1e] leading-snug mb-1">{p.title}</p>
+                        <p className="text-[11px] text-[#6c6a66] leading-relaxed line-clamp-2">{p.preview}</p>
+                      </div>
+                    ))}
+                    {/* CTA */}
+                    <button
+                      onClick={() => onNavigate?.('community', ctx.searchQuery)}
+                      className="w-full flex items-center justify-between px-4 py-3 bg-[#1c1c1e] hover:bg-[#333] transition-colors"
+                    >
+                      <span className="text-[12px] font-semibold text-white">See all "{ctx.searchQuery}" discussions →</span>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                    </button>
+                  </div>
+                )
+              })()}
             </div>
           )}
 

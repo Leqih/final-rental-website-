@@ -26,6 +26,7 @@ function App() {
   const [mapListingId, setMapListingId] = useState<number | null>(null);
   const [mapSubleaseId, setMapSubleaseId] = useState<number | null>(null);
   const [savedIds, setSavedIds] = useState<Set<number>>(new Set());
+  const [communitySearch, setCommunitySearch] = useState('');
   const [visible, setVisible] = useState(true);
   const pendingTab = useRef<Tab | null>(null);
 
@@ -80,7 +81,7 @@ function App() {
                   listing={detailListing}
                   onBack={closeListing}
                   selectedCollegeId={detailCollegeId}
-                  onNavigate={(tab) => { closeListing(); navigate(tab); }}
+                  onNavigate={(tab, search?) => { if (search) setCommunitySearch(search); closeListing(); navigate(tab); }}
                   onViewOnMap={(id) => { setMapListingId(id); closeListing(); navigate('explore'); }}
                 />
               </div>
@@ -89,7 +90,7 @@ function App() {
                 {activeTab === 'home' && <WebHomeScreen onNavigate={navigate} onViewListing={openListing} />}
                 {activeTab === 'listings' && <WebListingsScreen onViewListing={openListing} savedIds={savedIds} onToggleSave={toggleSave} onViewOnMap={(id) => { setMapSubleaseId(id); setMapListingId(null); navigate('explore'); }} onNavigate={navigate} />}
                 {activeTab === 'explore' && <WebExploreScreen onViewListing={openListing} onNavigate={navigate} initialListingId={mapListingId} initialSubleaseId={mapSubleaseId} savedIds={savedIds} onToggleSave={toggleSave} />}
-                {activeTab === 'community' && <WebCommunityScreen />}
+                {activeTab === 'community' && <WebCommunityScreen initialSearch={communitySearch} onSearchConsumed={() => setCommunitySearch('')} />}
                 {activeTab === 'messages' && <WebMessagesScreen />}
                 {activeTab === 'saved' && <WebSavedScreen savedIds={savedIds} onToggleSave={toggleSave} onViewListing={openListing} onNavigate={navigate} />}
               </>
