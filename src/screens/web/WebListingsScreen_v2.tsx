@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { listings } from '../../data/listings'
 
 // ── Sublease data (inline) ────────────────────────────────────────────────────
@@ -68,6 +68,10 @@ export default function WebListingsScreen({ onViewListing, savedIds: savedIdsPro
   const [selectedArea, setSelectedArea] = useState('')
   const [priceMin,     setPriceMin]     = useState(500)
   const [priceMax,     setPriceMaxVal]  = useState(1100)
+  const [minInput,     setMinInput]     = useState('500')
+  const [maxInput,     setMaxInput]     = useState('1100')
+  useEffect(() => setMinInput(String(priceMin)), [priceMin])
+  useEffect(() => setMaxInput(String(priceMax)), [priceMax])
   const [amenities,    setAmenities]    = useState<Set<string>>(new Set())
   const [activeAvailable, setActiveAvailable] = useState('Any')
   const [activeWalk,   setActiveWalk]   = useState('Any')
@@ -478,15 +482,17 @@ export default function WebListingsScreen({ onViewListing, savedIds: savedIdsPro
                 <div className="flex items-center gap-2 flex-wrap">
                   <div className="flex items-center gap-1.5 bg-white border border-[#e5e4e0] rounded-xl px-3 py-2 focus-within:border-[#1c1c1e] transition-colors w-28">
                     <span className="text-[12px] text-[#9ca3af]">$</span>
-                    <input type="number" value={priceMin} min={500} max={priceMax - 50} step={50}
-                      onChange={e => setPriceMin(Math.min(parseInt(e.target.value) || 500, priceMax - 50))}
+                    <input type="number" value={minInput} min={500} max={priceMax - 50} step={50}
+                      onChange={e => setMinInput(e.target.value)}
+                      onBlur={() => { const v = Math.min(Math.max(parseInt(minInput) || 500, 500), priceMax - 50); setPriceMin(v); setMinInput(String(v)) }}
                       className="flex-1 text-[13px] text-[#1c1c1e] bg-transparent outline-none w-16" />
                   </div>
                   <span className="text-[12px] text-[#9ca3af]">–</span>
                   <div className="flex items-center gap-1.5 bg-white border border-[#e5e4e0] rounded-xl px-3 py-2 focus-within:border-[#1c1c1e] transition-colors w-28">
                     <span className="text-[12px] text-[#9ca3af]">$</span>
-                    <input type="number" value={priceMax} min={priceMin + 50} max={2000} step={50}
-                      onChange={e => setPriceMaxVal(Math.max(parseInt(e.target.value) || 1100, priceMin + 50))}
+                    <input type="number" value={maxInput} min={priceMin + 50} max={2000} step={50}
+                      onChange={e => setMaxInput(e.target.value)}
+                      onBlur={() => { const v = Math.max(Math.min(parseInt(maxInput) || 1100, 2000), priceMin + 50); setPriceMaxVal(v); setMaxInput(String(v)) }}
                       className="flex-1 text-[13px] text-[#1c1c1e] bg-transparent outline-none w-16" />
                   </div>
                   <span className="text-[12px] text-[#9ca3af]">/ mo</span>

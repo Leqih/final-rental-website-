@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { listings } from '../../data/listings'
 import Map3DView from '../../components/Map3DView'
 import WebListingDetailScreen from './WebListingDetailScreen'
@@ -198,6 +198,11 @@ export default function WebExploreScreen({ onViewListing: _onViewListing, onNavi
   const [selectedFloor, setSelectedFloor] = useState<string>('')
   const [priceMin, setPriceMin] = useState(500)
   const [priceMax, setPriceMax] = useState(1100)
+  const [minInput, setMinInput] = useState('500')
+  const [maxInput, setMaxInput] = useState('1100')
+  // Keep local inputs in sync when slider changes
+  useEffect(() => setMinInput(String(priceMin)), [priceMin])
+  useEffect(() => setMaxInput(String(priceMax)), [priceMax])
   const [amenities, setAmenities] = useState<Set<string>>(new Set())
 
   // Sublease filters
@@ -548,8 +553,12 @@ export default function WebExploreScreen({ onViewListing: _onViewListing, onNavi
                         <span className="text-[13px] font-bold text-[#9ca3af]">$</span>
                         <input
                           type="number" min={500} max={priceMax - 50} step={25}
-                          value={priceMin}
-                          onChange={e => { const v = Number(e.target.value); if (!isNaN(v)) setPriceMin(Math.min(v, priceMax - 50)) }}
+                          value={minInput}
+                          onChange={e => setMinInput(e.target.value)}
+                          onBlur={() => {
+                            const v = Math.min(Math.max(parseInt(minInput) || 500, 500), priceMax - 50)
+                            setPriceMin(v); setMinInput(String(v))
+                          }}
                           className="w-full text-[14px] font-bold text-[#1c1c1e] bg-transparent outline-none leading-none"
                         />
                       </div>
@@ -560,8 +569,12 @@ export default function WebExploreScreen({ onViewListing: _onViewListing, onNavi
                         <span className="text-[13px] font-bold text-[#9ca3af]">$</span>
                         <input
                           type="number" min={priceMin + 50} max={2000} step={25}
-                          value={priceMax}
-                          onChange={e => { const v = Number(e.target.value); if (!isNaN(v)) setPriceMax(Math.max(v, priceMin + 50)) }}
+                          value={maxInput}
+                          onChange={e => setMaxInput(e.target.value)}
+                          onBlur={() => {
+                            const v = Math.max(Math.min(parseInt(maxInput) || 1100, 2000), priceMin + 50)
+                            setPriceMax(v); setMaxInput(String(v))
+                          }}
                           className="w-full text-[14px] font-bold text-[#1c1c1e] bg-transparent outline-none leading-none"
                         />
                       </div>
