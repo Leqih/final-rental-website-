@@ -209,6 +209,7 @@ export default function WebExploreScreen({ onViewListing: _onViewListing, onNavi
   const [subleasePriceMax, setSubleasePriceMax] = useState(900)
 
   const [panelCollapsed, setPanelCollapsed] = useState(false)
+  const [showCards, setShowCards] = useState(true)
   const [localSavedIds, setLocalSavedIds] = useState<Set<number>>(new Set())
   const savedIds = savedIdsProp ?? localSavedIds
   const [highlightPinId, setHighlightPinId] = useState<number | null>(initialSubleaseId ?? initialListingId ?? null)
@@ -700,17 +701,25 @@ export default function WebExploreScreen({ onViewListing: _onViewListing, onNavi
             )}
           </div>
 
-          {/* Results count + Listing cards — fixed bottom section */}
-          <div className="flex-shrink-0 h-[260px] flex flex-col border-t border-[#f0efeb]">
-            <div className="flex-shrink-0 px-4 py-2 border-b border-[#f0efeb]">
-              {mode === 'rent'
-                ? <p className="text-[11px] text-[#6c6a66]"><span className="font-bold text-[#1c1c1e]">{filtered.length}</span> listings match</p>
-                : <p className="text-[11px] text-[#6c6a66]"><span className="font-bold text-[#1c1c1e]">{filteredSubleases.length}</span> subleases available</p>
-              }
-            </div>
+          {/* Results count + Listing cards — collapsible bottom section */}
+          <div className={`flex-shrink-0 flex flex-col border-t border-[#f0efeb] transition-all duration-200 ${showCards ? 'h-[260px]' : 'h-9'}`}>
+            <button
+              onClick={() => setShowCards(s => !s)}
+              className="flex-shrink-0 flex items-center justify-between px-4 py-2 hover:bg-[#fafaf9] transition-colors w-full text-left"
+            >
+              <p className="text-[11px] text-[#6c6a66]">
+                {mode === 'rent'
+                  ? <><span className="font-bold text-[#1c1c1e]">{filtered.length}</span> listings match</>
+                  : <><span className="font-bold text-[#1c1c1e]">{filteredSubleases.length}</span> subleases available</>
+                }
+              </p>
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={`transition-transform duration-200 ${showCards ? 'rotate-180' : ''}`}>
+                <polyline points="6 9 12 15 18 9"/>
+              </svg>
+            </button>
 
           {/* Listing cards */}
-          <div className="flex-1 min-h-0 overflow-y-auto px-3 py-3 space-y-2.5">
+          <div className={`flex-1 min-h-0 overflow-y-auto px-3 py-3 space-y-2.5 ${showCards ? '' : 'hidden'}`}>
             {mode === 'rent' ? (
               <>
                 {filtered.length === 0 && (
