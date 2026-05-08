@@ -103,7 +103,7 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
       bearing: -20,
     } as maplibregl.MapOptions);
 
-    map.addControl(new maplibregl.NavigationControl({ showCompass: true, visualizePitch: true }), 'bottom-right');
+    map.addControl(new maplibregl.NavigationControl({ showCompass: true, visualizePitch: true }), 'bottom-left');
 
     const movePinsDirect = () => {
       pinElemsRef.current.forEach((el, id) => {
