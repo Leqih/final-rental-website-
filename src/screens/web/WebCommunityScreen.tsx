@@ -96,6 +96,7 @@ export default function WebCommunityScreen() {
   const [toast, setToast] = useState<string | null>(null)
   const [menuOpen, setMenuOpen] = useState<number | null>(null)
   const [postSuccess, setPostSuccess] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
 
   const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 2500) }
 
@@ -137,7 +138,11 @@ export default function WebCommunityScreen() {
     })
   }
 
-  const filtered = posts.filter(p => !activeFlair || p.flair === activeFlair)
+  const q = searchQuery.trim().toLowerCase()
+  const filtered = posts.filter(p =>
+    (!activeFlair || p.flair === activeFlair) &&
+    (!q || p.title.toLowerCase().includes(q) || p.body.toLowerCase().includes(q))
+  )
   const sorted = [...filtered].sort((a, b) => {
     if (sort === 'Top') return votes[b.id] - votes[a.id]
     if (sort === 'New') return a.id > b.id ? -1 : 1
@@ -164,8 +169,28 @@ export default function WebCommunityScreen() {
               Create Post
             </button>
           </div>
+          {/* Search bar */}
+          <div className="relative mt-4">
+            <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#9ca3af]" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <input
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              placeholder="Search posts…"
+              className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-[#e5e4e0] text-[13px] text-[#1c1c1e] placeholder-[#9ca3af] outline-none focus:border-[#1c1c1e] transition-colors bg-[#f9f8f6]"
+            />
+            {searchQuery && (
+              <button onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9ca3af] hover:text-[#1c1c1e] transition-colors">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+              </button>
+            )}
+          </div>
+
           {/* Sort + flair filters in header */}
-          <div className="flex items-center gap-2 mt-4 flex-wrap">
+          <div className="flex items-center gap-2 mt-3 flex-wrap">
             {sortOptions.map(s => (
               <button
                 key={s}
@@ -197,6 +222,12 @@ export default function WebCommunityScreen() {
 
             {/* Posts */}
             <div className="space-y-2">
+              {sorted.length === 0 && (
+                <div className="bg-white rounded-2xl border border-[#e5e4e0] px-8 py-12 text-center">
+                  <p className="text-[15px] font-bold text-[#1c1c1e] mb-1">No posts found</p>
+                  <p className="text-[13px] text-[#9ca3af]">Try a different keyword or clear the search</p>
+                </div>
+              )}
               {sorted.map(post => {
                 const flair = flairs.find(f => f.id === post.flair)!
                 const v = voted[post.id]
