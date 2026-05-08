@@ -459,7 +459,13 @@ export default function WebExploreScreen({ onViewListing: _onViewListing, onNavi
         {/* Collapse toggle */}
         <div className={`flex-shrink-0 border-b border-[#f0efeb] flex ${panelCollapsed ? 'justify-center px-2 py-3' : 'justify-end px-4 py-3'}`}>
           <button
-            onClick={() => setPanelCollapsed(c => !c)}
+            onClick={() => setPanelCollapsed(c => {
+              const next = !c;
+              // next=false means panel is now open (filter visible)
+              if (!next) window.location.hash = mode === 'sublease' ? 'explore/sublease/filter' : 'explore/filter';
+              else window.location.hash = mode === 'sublease' ? 'explore/sublease' : 'explore';
+              return next;
+            })}
             className="w-7 h-7 rounded-lg flex items-center justify-center text-[#6c6a66] hover:bg-[#f5f4f0] hover:text-[#1c1c1e] transition-colors"
           >
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
