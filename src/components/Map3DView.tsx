@@ -297,7 +297,7 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
           const walkMins = activeCollege ? l.walkFrom[activeCollege.id] : null;
           return (
             <button key={l.id}
-              onClick={() => { setSelectedId(l.id); flyTo(l.id); setGuideIdx(i); }}
+              onClick={() => { setSelectedId(l.id); flyTo(l.id); setGuideIdx(i); onPinSelect?.(l.id); }}
               style={{ scrollSnapAlign: 'start', flexShrink: 0 }}
               className={`flex w-[260px] rounded-2xl overflow-hidden transition-all h-[136px] bg-white text-left ${isActive ? 'ring-2 ring-[#1c1c1e] shadow-xl' : 'shadow-lg hover:shadow-xl'}`}
             >
