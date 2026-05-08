@@ -213,7 +213,6 @@ export default function WebExploreScreen({ onViewListing: _onViewListing, onNavi
   const [subleasePriceMax, setSubleasePriceMax] = useState(900)
 
   const [panelCollapsed, setPanelCollapsed] = useState(false)
-  const [showCards, setShowCards] = useState(true)
   const [localSavedIds, setLocalSavedIds] = useState<Set<number>>(new Set())
   const savedIds = savedIdsProp ?? localSavedIds
   const [highlightPinId, setHighlightPinId] = useState<number | null>(initialSubleaseId ?? initialListingId ?? null)
