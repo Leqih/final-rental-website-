@@ -272,7 +272,8 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
       {/* Sort + Reset row */}
       <div className="flex items-center justify-between px-5 pb-2">
         <div className="flex items-center gap-1.5">
-          <span className="text-[10px] text-[#9ca3af] font-medium">Sort:</span>
+          <span className="text-[10px] font-semibold text-[#1c1c1e]">{allCards.length}</span>
+          <span className="text-[10px] text-[#9ca3af] font-medium">listing{allCards.length !== 1 ? 's' : ''} · Sort:</span>
           {(['default', 'asc', 'desc'] as const).map(s => (
             <button key={s} onClick={() => setPriceSort(s)}
               className={`h-6 px-2 rounded-lg text-[10px] font-semibold transition-all ${priceSort === s ? 'bg-[#1c1c1e] text-white' : 'bg-white/80 text-[#6c6a66] border border-[#e8e7e3] hover:border-[#1c1c1e]'}`}>
