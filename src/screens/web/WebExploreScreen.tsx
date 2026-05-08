@@ -471,7 +471,7 @@ export default function WebExploreScreen({ onViewListing: _onViewListing, onNavi
 
         {!panelCollapsed && <>
           {/* Scrollable filter area */}
-          <div className="flex-shrink-0 overflow-y-auto px-4 pt-4 pb-3 space-y-5 border-b border-[#f0efeb]">
+          <div className="flex-1 min-h-0 overflow-y-auto px-4 pt-4 pb-3 space-y-5 border-b border-[#f0efeb]">
 
             {/* Rent / Sublease toggle */}
             <div className="flex bg-[#f5f4f0] rounded-xl p-1 gap-1">
@@ -517,24 +517,48 @@ export default function WebExploreScreen({ onViewListing: _onViewListing, onNavi
                 <div>
                   <div className="flex items-center justify-between mb-3">
                     <p className="text-sm font-bold text-[#1c1c1e]">Rental Price</p>
-                    <span className="text-[11px] font-medium text-[#9ca3af] flex items-center gap-0.5">Monthly <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span>
+                    <span className="text-[11px] font-medium text-[#9ca3af]">Monthly</span>
                   </div>
+                  {/* Dual-range slider — MIN gets higher z-index when near MAX */}
                   <div className="relative h-1.5 bg-[#e8e7e3] rounded-full mb-4 mx-1">
                     <div className="absolute h-full bg-[#1c1c1e] rounded-full" style={{ left: `${((priceMin - 500) / 700) * 100}%`, right: `${100 - ((priceMax - 500) / 700) * 100}%` }} />
-                    <input type="range" min={500} max={1200} step={25} value={priceMin} onChange={e => setPriceMin(Math.min(Number(e.target.value), priceMax - 50))} className="absolute inset-0 w-full opacity-0 cursor-pointer h-full" style={{ zIndex: 2 }} />
-                    <input type="range" min={500} max={1200} step={25} value={priceMax} onChange={e => setPriceMax(Math.max(Number(e.target.value), priceMin + 50))} className="absolute inset-0 w-full opacity-0 cursor-pointer h-full" style={{ zIndex: 3 }} />
+                    <input type="range" min={500} max={1200} step={25} value={priceMin}
+                      onChange={e => setPriceMin(Math.min(Number(e.target.value), priceMax - 50))}
+                      className="absolute inset-0 w-full opacity-0 cursor-pointer h-full"
+                      style={{ zIndex: ((priceMax - priceMin) / 700) < 0.15 ? 5 : 2 }} />
+                    <input type="range" min={500} max={1200} step={25} value={priceMax}
+                      onChange={e => setPriceMax(Math.max(Number(e.target.value), priceMin + 50))}
+                      className="absolute inset-0 w-full opacity-0 cursor-pointer h-full"
+                      style={{ zIndex: ((priceMax - priceMin) / 700) < 0.15 ? 2 : 3 }} />
                     <div className="absolute top-1/2 -translate-y-1/2 w-4 h-4 bg-white border-2 border-[#1c1c1e] rounded-full shadow-md pointer-events-none" style={{ left: `calc(${((priceMin - 500) / 700) * 100}% - 8px)` }} />
                     <div className="absolute top-1/2 -translate-y-1/2 w-4 h-4 bg-white border-2 border-[#1c1c1e] rounded-full shadow-md pointer-events-none" style={{ left: `calc(${((priceMax - 500) / 700) * 100}% - 8px)` }} />
                   </div>
+                  {/* Editable MIN / MAX inputs */}
                   <div className="flex gap-2">
-                    <div className="flex-1 border border-[#e8e7e3] rounded-2xl px-3 py-2.5">
+                    <label className="flex-1 border border-[#e8e7e3] rounded-2xl px-3 py-2.5 cursor-text focus-within:border-[#1c1c1e] transition-colors">
                       <p className="text-[10px] text-[#9ca3af] font-semibold uppercase tracking-wider leading-none mb-1">Min</p>
-                      <p className="text-[14px] font-bold text-[#1c1c1e] leading-none">${priceMin}</p>
-                    </div>
-                    <div className="flex-1 border-2 border-[#1c1c1e] rounded-2xl px-3 py-2.5">
+                      <div className="flex items-center gap-0.5">
+                        <span className="text-[13px] font-bold text-[#9ca3af]">$</span>
+                        <input
+                          type="number" min={500} max={priceMax - 50} step={25}
+                          value={priceMin}
+                          onChange={e => { const v = Number(e.target.value); if (!isNaN(v)) setPriceMin(Math.min(v, priceMax - 50)) }}
+                          className="w-full text-[14px] font-bold text-[#1c1c1e] bg-transparent outline-none leading-none"
+                        />
+                      </div>
+                    </label>
+                    <label className="flex-1 border-2 border-[#1c1c1e] rounded-2xl px-3 py-2.5 cursor-text focus-within:border-[#1c1c1e] transition-colors">
                       <p className="text-[10px] text-[#9ca3af] font-semibold uppercase tracking-wider leading-none mb-1">Max</p>
-                      <p className="text-[14px] font-bold text-[#1c1c1e] leading-none">${priceMax}</p>
-                    </div>
+                      <div className="flex items-center gap-0.5">
+                        <span className="text-[13px] font-bold text-[#9ca3af]">$</span>
+                        <input
+                          type="number" min={priceMin + 50} max={2000} step={25}
+                          value={priceMax}
+                          onChange={e => { const v = Number(e.target.value); if (!isNaN(v)) setPriceMax(Math.max(v, priceMin + 50)) }}
+                          className="w-full text-[14px] font-bold text-[#1c1c1e] bg-transparent outline-none leading-none"
+                        />
+                      </div>
+                    </label>
                   </div>
                 </div>
 
@@ -676,16 +700,17 @@ export default function WebExploreScreen({ onViewListing: _onViewListing, onNavi
             )}
           </div>
 
-          {/* Results count */}
-          <div className="flex-shrink-0 px-4 py-2.5 border-b border-[#f0efeb]">
-            {mode === 'rent'
-              ? <p className="text-[11px] text-[#6c6a66]"><span className="font-bold text-[#1c1c1e]">{filtered.length}</span> listings match</p>
-              : <p className="text-[11px] text-[#6c6a66]"><span className="font-bold text-[#1c1c1e]">{filteredSubleases.length}</span> subleases available</p>
-            }
-          </div>
+          {/* Results count + Listing cards — fixed bottom section */}
+          <div className="flex-shrink-0 h-[260px] flex flex-col border-t border-[#f0efeb]">
+            <div className="flex-shrink-0 px-4 py-2 border-b border-[#f0efeb]">
+              {mode === 'rent'
+                ? <p className="text-[11px] text-[#6c6a66]"><span className="font-bold text-[#1c1c1e]">{filtered.length}</span> listings match</p>
+                : <p className="text-[11px] text-[#6c6a66]"><span className="font-bold text-[#1c1c1e]">{filteredSubleases.length}</span> subleases available</p>
+              }
+            </div>
 
           {/* Listing cards */}
-          <div className="flex-1 overflow-y-auto px-3 py-3 space-y-2.5">
+          <div className="flex-1 min-h-0 overflow-y-auto px-3 py-3 space-y-2.5">
             {mode === 'rent' ? (
               <>
                 {filtered.length === 0 && (
@@ -805,6 +830,7 @@ export default function WebExploreScreen({ onViewListing: _onViewListing, onNavi
               </>
             )}
           </div>
+          </div>{/* end fixed bottom section */}
         </>}
       </div>
 
