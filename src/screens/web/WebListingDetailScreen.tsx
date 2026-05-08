@@ -95,16 +95,18 @@ interface Props {
   onNavigate?: (tab: string, search?: string) => void
   onViewOnMap?: (id: number) => void
   onTabChange?: (tab: string) => void
+  onApplyStep?: (step: string) => void
 }
 
 type Tab = 'overview' | 'walk' | 'amenities' | 'reviews' | 'apply'
 
-export default function WebListingDetailScreen({ listing, onBack, selectedCollegeId, onNavigate, onViewOnMap, onTabChange }: Props) {
+export default function WebListingDetailScreen({ listing, onBack, selectedCollegeId, onNavigate, onViewOnMap, onTabChange, onApplyStep }: Props) {
   const [saved, setSaved] = useState(false)
   const [photoIdx, setPhotoIdx] = useState(0)
   const [activeTab, setActiveTab] = useState<Tab>('overview')
 
   const switchTab = (t: Tab) => { setActiveTab(t); onTabChange?.(t); }
+  const switchApplyStep = (s: 'tour' | 'info' | 'done') => { setApplyStep(s); onApplyStep?.(s); }
   const [applyStep, setApplyStep] = useState<'tour' | 'info' | 'done'>('tour')
   const [tourDate, setTourDate] = useState('')
   const [tourTime, setTourTime] = useState('')
@@ -567,7 +569,7 @@ export default function WebListingDetailScreen({ listing, onBack, selectedColleg
                       <p className="text-[13px] font-semibold text-[#1c1c1e]">{tourDate}, {tourTime} · In-person viewing</p>
                     </div>
                   )}
-                  <button onClick={() => { if (tourDate && tourTime) setApplyStep('info') }}
+                  <button onClick={() => { if (tourDate && tourTime) switchApplyStep('info') }}
                     className={`w-full rounded-2xl py-3 text-[14px] font-semibold transition-colors ${tourDate && tourTime ? 'bg-[#1c1c1e] text-white' : 'bg-[#e5e4e0] text-[#aaa] cursor-not-allowed'}`}>
                     Next: Your information →
                   </button>
@@ -597,8 +599,8 @@ export default function WebListingDetailScreen({ listing, onBack, selectedColleg
                     </div>
                   </div>
                   <div className="flex gap-2.5 mt-4">
-                    <button onClick={() => setApplyStep('tour')} className="py-3 px-5 bg-[#f7f6f2] rounded-2xl text-[#1c1c1e] text-[13px] font-semibold hover:bg-[#e5e4e0] transition-colors">← Back</button>
-                    <button onClick={() => { if (applyName && applyEmail) setApplyStep('done') }}
+                    <button onClick={() => switchApplyStep('tour')} className="py-3 px-5 bg-[#f7f6f2] rounded-2xl text-[#1c1c1e] text-[13px] font-semibold hover:bg-[#e5e4e0] transition-colors">← Back</button>
+                    <button onClick={() => { if (applyName && applyEmail) switchApplyStep('done') }}
                       className={`flex-1 rounded-2xl py-3 text-[14px] font-semibold transition-colors ${applyName && applyEmail ? 'bg-[#1c1c1e] text-white' : 'bg-[#e5e4e0] text-[#aaa] cursor-not-allowed'}`}>
                       Submit &amp; Confirm Tour
                     </button>

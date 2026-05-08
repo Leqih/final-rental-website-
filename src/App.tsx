@@ -47,6 +47,11 @@ function App() {
   const [visible, setVisible] = useState(true);
   const pendingTab = useRef<Tab | null>(null);
 
+  // Set #home on initial load if hash is empty
+  useEffect(() => {
+    if (!window.location.hash || window.location.hash === '#') setHash('home');
+  }, []);
+
   // Sync state when user presses browser back/forward
   useEffect(() => {
     const onHashChange = () => {
@@ -110,7 +115,7 @@ function App() {
         `}</style>
         <WebLayout active={activeTab} onNavigate={navigate} savedCount={savedIds.size}>
           <div className="flex-1 flex flex-col overflow-hidden" style={{ opacity: visible ? 1 : 0, transition: 'opacity 0.15s ease' }}>
-            {detailListing && activeTab !== 'explore' ? (
+            {detailListing ? (
               <div className="flex flex-1 overflow-hidden" style={{ animation: 'fadeIn 0.18s ease' }}>
                 <style>{`@keyframes fadeIn { from { opacity:0 } to { opacity:1 } }`}</style>
                 <WebListingDetailScreen
@@ -120,6 +125,7 @@ function App() {
                   onNavigate={(tab, search?) => { if (search) setCommunitySearch(search); closeListing(); navigate(tab); }}
                   onViewOnMap={(id) => { setMapListingId(id); closeListing(); navigate('explore'); }}
                   onTabChange={(t) => setHash(`listing/${detailListingId}/${t}`)}
+                  onApplyStep={(step) => setHash(`listing/${detailListingId}/apply/${step}`)}
                 />
               </div>
             ) : (
