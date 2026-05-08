@@ -8,6 +8,7 @@ export const imgSunrise = "https://images.unsplash.com/photo-1574362848149-11496
 export const imgGoodwin = "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&q=80";
 export const imgSpring  = "https://images.unsplash.com/photo-1493809842364-78817add7ffb?w=800&q=80";
 export const imgOrchard = "https://images.unsplash.com/photo-1484154218962-a197022b5858?w=800&q=80";
+export const imgGreenLoft = "https://images.unsplash.com/photo-1560185007-cde436f6a4d0?w=800&q=80";
 
 export interface Listing {
   id: number;
@@ -27,6 +28,7 @@ export interface Listing {
   phone: string;
   walkFrom: Record<string, number>;
   pins: Record<string, { x: number; y: number }>;
+  neighborhood: string;
 }
 
 export const listings: Listing[] = [
@@ -48,6 +50,7 @@ export const listings: Listing[] = [
     phone: '(217) 555-0110',
     walkFrom: { eng: 8, bus: 14, las: 10, agr: 18, med: 11, art: 13 },
     pins: { all: { x: 28, y: 38 }, green: { x: 35, y: 42 }, first: { x: 55, y: 40 }, south: { x: 30, y: 50 }, downtown: { x: 40, y: 45 } },
+    neighborhood: 'first',
   },
   {
     id: 2,
@@ -67,6 +70,7 @@ export const listings: Listing[] = [
     phone: '(217) 555-0202',
     walkFrom: { eng: 14, bus: 10, las: 7, agr: 20, med: 6, art: 9 },
     pins: { all: { x: 58, y: 55 }, green: { x: 60, y: 45 }, first: { x: 38, y: 55 }, south: { x: 52, y: 60 }, downtown: { x: 55, y: 40 } },
+    neighborhood: 'green',
   },
   {
     id: 3,
@@ -86,6 +90,7 @@ export const listings: Listing[] = [
     phone: '(217) 555-0303',
     walkFrom: { eng: 9, bus: 6, las: 11, agr: 16, med: 8, art: 10 },
     pins: { all: { x: 70, y: 22 }, green: { x: 72, y: 32 }, first: { x: 68, y: 28 }, south: { x: 65, y: 30 }, downtown: { x: 70, y: 30 } },
+    neighborhood: 'green',
   },
   {
     id: 4,
@@ -105,6 +110,7 @@ export const listings: Listing[] = [
     phone: '(217) 555-0404',
     walkFrom: { eng: 12, bus: 15, las: 4, agr: 14, med: 7, art: 6 },
     pins: { all: { x: 45, y: 60 }, green: { x: 48, y: 60 }, first: { x: 44, y: 62 }, south: { x: 42, y: 35 }, downtown: { x: 45, y: 55 } },
+    neighborhood: 'chalmers',
   },
   {
     id: 5,
@@ -124,6 +130,7 @@ export const listings: Listing[] = [
     phone: '(217) 555-0505',
     walkFrom: { eng: 6, bus: 9, las: 13, agr: 17, med: 8, art: 15 },
     pins: { all: { x: 62, y: 42 }, green: { x: 65, y: 38 }, first: { x: 58, y: 44 }, south: { x: 60, y: 48 }, downtown: { x: 62, y: 35 } },
+    neighborhood: 'south',
   },
   {
     id: 6,
@@ -143,6 +150,7 @@ export const listings: Listing[] = [
     phone: '(217) 555-0606',
     walkFrom: { eng: 10, bus: 13, las: 6, agr: 12, med: 9, art: 5 },
     pins: { all: { x: 32, y: 52 }, green: { x: 30, y: 55 }, first: { x: 36, y: 50 }, south: { x: 35, y: 58 }, downtown: { x: 30, y: 50 } },
+    neighborhood: 'chalmers',
   },
   {
     id: 7,
@@ -162,6 +170,7 @@ export const listings: Listing[] = [
     phone: '(217) 555-0707',
     walkFrom: { eng: 16, bus: 8, las: 9, agr: 10, med: 12, art: 7 },
     pins: { all: { x: 20, y: 30 }, green: { x: 22, y: 28 }, first: { x: 18, y: 32 }, south: { x: 22, y: 35 }, downtown: { x: 20, y: 28 } },
+    neighborhood: 'quad',
   },
   {
     id: 8,
@@ -181,5 +190,26 @@ export const listings: Listing[] = [
     phone: '(217) 555-0808',
     walkFrom: { eng: 18, bus: 20, las: 16, agr: 7, med: 13, art: 20 },
     pins: { all: { x: 55, y: 75 }, green: { x: 52, y: 72 }, first: { x: 58, y: 74 }, south: { x: 54, y: 80 }, downtown: { x: 55, y: 72 } },
+    neighborhood: 'south',
+  },
+  {
+    id: 9,
+    img: imgGreenLoft,
+    price: 875,
+    name: 'Green & Fourth Flats',
+    beds: '2B2B',
+    badge: 'Verified',
+    badgeColor: 'bg-[rgba(111,207,151,0.92)] text-[#1c1c1e]',
+    desc: 'Spacious 2-bed 2-bath right on the Green Street corridor. Perfect for two roommates splitting rent — each gets a private bath. Modern kitchen, in-unit laundry, and a short walk to Gies and the Quad.',
+    address: '408 E Green St',
+    sqft: '950 sqft',
+    floor: 'Floor 3 of 5',
+    available: 'Aug 2026',
+    amenities: ['In-unit laundry', 'Private bath per room', 'Modern kitchen', 'Gym', 'Bike storage', 'Near bus stop', 'High-speed Wi-Fi', 'Pet friendly'],
+    landlord: 'Green Street Properties',
+    phone: '(217) 555-0910',
+    walkFrom: { eng: 10, bus: 7, las: 8, agr: 18, med: 7, art: 9 },
+    pins: { all: { x: 62, y: 48 }, green: { x: 64, y: 42 }, first: { x: 60, y: 46 }, south: { x: 58, y: 52 }, downtown: { x: 62, y: 38 } },
+    neighborhood: 'green',
   },
 ];

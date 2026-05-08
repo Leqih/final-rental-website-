@@ -12,10 +12,42 @@ const subleases = [
 ]
 const subleaseToMapId: Record<number, number> = { 1: 101, 2: 102, 3: 103, 4: 104, 5: 105, 6: 101 }
 
-const bedFilters    = ['All', 'Studio', '1BR', '2BR+']
-const sortOptions   = ['Best Match', 'Price: Low', 'Price: High']
-const roomTypes     = ['All', 'Studio', '1B1B', '2B1B', '2B2B']
+const sortOptions    = ['Best Match', 'Price: Low', 'Price: High']
+const roomTypes      = ['All', 'Studio', '1B1B', '2B1B', '2B2B']
 const subSortOptions = ['Nearest first', 'Price: Low', 'Price: High']
+
+// ── Synced with Explore Map ───────────────────────────────────────────────────
+const placeTypes = [
+  { id: 'apartments', label: 'Apartments', icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M3 9h6M3 15h6M15 3v18M15 9h6M15 15h6"/></svg> },
+  { id: 'house',      label: 'House',      icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg> },
+  { id: 'studio',     label: 'Studio',     icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M4 10h16"/></svg> },
+  { id: 'room',       label: 'Room',       icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M2 4h20v16H2z"/><path d="M12 4v16"/></svg> },
+]
+const bedroomOptions = ['Studio', '1', '2', '3', '4', '5+']
+const floorOptions   = ['1', '2', '3', '4', '5', '6+']
+const areaOptions    = [
+  { id: 'green',    label: 'Green Street', emoji: '🏙️' },
+  { id: 'quad',     label: 'Main Quad',    emoji: '🎓' },
+  { id: 'first',    label: 'First Street', emoji: '🏘️' },
+  { id: 'chalmers', label: 'Chalmers',     emoji: '🌆' },
+  { id: 'south',    label: 'South Campus', emoji: '🌿' },
+]
+const amenityOptions = [
+  { key: 'laundry', label: 'In-unit laundry' },
+  { key: 'pet',     label: 'Pets allowed' },
+  { key: 'parking', label: 'Parking slot' },
+]
+const availableOptions = ['Any', 'Jul 2026', 'Aug 2026']
+const walkOptions: { label: string; max: number }[] = [{ label: 'Any', max: Infinity }, { label: '≤5 min', max: 5 }, { label: '≤10 min', max: 10 }, { label: '≤15 min', max: 15 }]
+const campusDestOptions: { key: string; label: string; emoji: string }[] = [
+  { key: 'any',  label: 'Any building',    emoji: '🎓' },
+  { key: 'eng',  label: 'Grainger (Eng)',  emoji: '⚙️' },
+  { key: 'bus',  label: 'Gies (Business)', emoji: '📊' },
+  { key: 'las',  label: 'LAS',             emoji: '📚' },
+  { key: 'agr',  label: 'ACES (Agr)',      emoji: '🌾' },
+  { key: 'med',  label: 'Carle (Med)',      emoji: '🏥' },
+  { key: 'art',  label: 'FAA (Art)',        emoji: '🎨' },
+]
 
 interface Props {
   onViewListing:  (id: number) => void
@@ -29,12 +61,23 @@ export default function WebListingsScreen({ onViewListing, savedIds: savedIdsPro
   // ── shared ──
   const [mode, setMode] = useState<'rent' | 'sublease'>('rent')
 
-  // ── rent state ──
-  const [activeBed,     setActiveBed]     = useState('All')
-  const [sortBy,        setSortBy]        = useState('Best Match')
-  const [localSavedIds, setLocalSavedIds] = useState<Set<number>>(new Set())
+  // ── rent state (synced with Explore Map) ──
+  const [placeType,    setPlaceType]    = useState('apartments')
+  const [selectedBed,  setSelectedBed]  = useState('')
+  const [selectedFloor,setSelectedFloor]= useState('')
+  const [selectedArea, setSelectedArea] = useState('')
+  const [priceMin,     setPriceMin]     = useState(500)
+  const [priceMax,     setPriceMaxVal]  = useState(1100)
+  const [amenities,    setAmenities]    = useState<Set<string>>(new Set())
+  const [activeAvailable, setActiveAvailable] = useState('Any')
+  const [activeWalk,   setActiveWalk]   = useState('Any')
+  const [walkTo,       setWalkTo]       = useState('any')
+  const [verifiedOnly, setVerifiedOnly] = useState(false)
+  const [showFilters,  setShowFilters]  = useState(false)
+  const [sortBy,             setSortBy]             = useState('Best Match')
+  const [localSavedIds,      setLocalSavedIds]      = useState<Set<number>>(new Set())
   const savedIds = savedIdsProp ?? localSavedIds
-  const [showSavedOnly, setShowSavedOnly] = useState(false)
+  const [showSavedOnly] = useState(false)
   const [search,        setSearch]        = useState('')
 
   // ── sublease state ──
@@ -74,12 +117,36 @@ export default function WebListingsScreen({ onViewListing, savedIds: savedIdsPro
     setTimeout(() => setInterestSent(false), 3000)
   }
 
+  // ── helpers ──
+  const toggleAmenity = (k: string) => setAmenities(prev => { const n = new Set(prev); n.has(k) ? n.delete(k) : n.add(k); return n })
+  const activeFilterCount = (placeType !== 'apartments' ? 1 : 0) + (selectedBed ? 1 : 0) + (selectedFloor ? 1 : 0) + (selectedArea ? 1 : 0) + (priceMin !== 500 || priceMax !== 1100 ? 1 : 0) + amenities.size + (activeAvailable !== 'Any' ? 1 : 0) + (activeWalk !== 'Any' ? 1 : 0) + (walkTo !== 'any' ? 1 : 0) + (verifiedOnly ? 1 : 0)
+  const clearFilters = () => { setPlaceType('apartments'); setSelectedBed(''); setSelectedFloor(''); setSelectedArea(''); setPriceMin(500); setPriceMaxVal(1100); setAmenities(new Set()); setActiveAvailable('Any'); setActiveWalk('Any'); setWalkTo('any'); setVerifiedOnly(false) }
+
   // ── rent filtering ──
   const filteredRent = listings.filter(l => {
-    const matchesBed = activeBed === 'All' || (activeBed === 'Studio' && l.beds === 'Studio') || (activeBed === '1BR' && l.beds === '1B1B') || (activeBed === '2BR+' && (l.beds === '2B1B' || l.beds === '2B2B'))
+    const matchesBed = !selectedBed ||
+      (selectedBed === 'Studio' && l.beds === 'Studio') ||
+      (selectedBed === '1' && l.beds === '1B1B') ||
+      (selectedBed === '2' && (l.beds === '2B1B' || l.beds === '2B2B')) ||
+      (selectedBed === '3' && l.beds.startsWith('3')) ||
+      (selectedBed === '4' && l.beds.startsWith('4')) ||
+      (selectedBed === '5+' && parseInt(l.beds) >= 5)
+    const matchesArea = !selectedArea || l.neighborhood === selectedArea
+    const matchesPrice = l.price >= priceMin && l.price <= priceMax
+    const matchesAmenities = amenities.size === 0 || [...amenities].every(k => {
+      if (k === 'laundry') return l.amenities.some(a => a.toLowerCase().includes('laundry'))
+      if (k === 'pet')     return l.amenities.some(a => a.toLowerCase().includes('pet'))
+      if (k === 'parking') return l.amenities.some(a => a.toLowerCase().includes('parking'))
+      return true
+    })
+    const matchesAvailable = activeAvailable === 'Any' || l.available.includes(activeAvailable)
+    const walkMins = walkTo === 'any' ? Math.min(...Object.values(l.walkFrom)) : (l.walkFrom[walkTo as keyof typeof l.walkFrom] ?? 99)
+    const walkMax = walkOptions.find(w => w.label === activeWalk)?.max ?? Infinity
+    const matchesWalk = walkMins <= walkMax
+    const matchesVerified = !verifiedOnly || l.badge === 'Verified'
     const matchesSearch = search.trim() === '' || l.name.toLowerCase().includes(search.toLowerCase()) || l.address.toLowerCase().includes(search.toLowerCase()) || l.amenities.some(a => a.toLowerCase().includes(search.toLowerCase()))
     const matchesSaved = !showSavedOnly || savedIds.has(l.id)
-    return matchesBed && matchesSearch && matchesSaved
+    return matchesBed && matchesArea && matchesPrice && matchesAmenities && matchesAvailable && matchesWalk && matchesVerified && matchesSearch && matchesSaved
   })
   const sortedRent = [...filteredRent].sort((a, b) => sortBy === 'Price: Low' ? a.price - b.price : sortBy === 'Price: High' ? b.price - a.price : 0)
 
@@ -327,6 +394,15 @@ export default function WebListingsScreen({ onViewListing, savedIds: savedIdsPro
                 </select>
               )}
 
+              {/* Filter toggle (rent only) */}
+              {mode === 'rent' && (
+                <button onClick={() => setShowFilters(s => !s)} className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-[13px] font-semibold transition-all border ${showFilters || activeFilterCount > 0 ? 'bg-[#1c1c1e] text-white border-[#1c1c1e]' : 'bg-white text-[#1c1c1e] border-[#e5e4e0] hover:border-[#1c1c1e]'}`}>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
+                  Filters
+                  {activeFilterCount > 0 && <span className={`w-4 h-4 rounded-full text-[10px] font-bold flex items-center justify-center ${showFilters || activeFilterCount > 0 ? 'bg-white text-[#1c1c1e]' : 'bg-[#1c1c1e] text-white'}`}>{activeFilterCount}</span>}
+                </button>
+              )}
+
               {/* Post sublease (sublease only) */}
               {mode === 'sublease' && (
                 <button onClick={() => setShowPost(true)} className="flex items-center gap-2 px-4 py-2.5 bg-[#1c1c1e] text-white text-[13px] font-semibold rounded-xl hover:bg-[#333] transition-colors">
@@ -337,33 +413,187 @@ export default function WebListingsScreen({ onViewListing, savedIds: savedIdsPro
             </div>
           </div>
 
-          {/* Filter row */}
-          <div className="flex items-center gap-2 mt-4">
-            {mode === 'rent' ? (
-              <>
-                {bedFilters.map(f => (
-                  <button key={f} onClick={() => setActiveBed(f)} className={`px-4 py-1.5 rounded-xl text-[13px] font-semibold transition-all ${activeBed === f ? 'bg-[#1c1c1e] text-white' : 'bg-[#f5f4f0] text-[#6c6a66] hover:bg-[#e5e4e0] hover:text-[#1c1c1e]'}`}>{f}</button>
-                ))}
-                {savedIds.size > 0 && (
-                  <button onClick={() => setShowSavedOnly(s => !s)} className={`ml-auto flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-[13px] font-semibold transition-all ${showSavedOnly ? 'bg-[#1c1c1e] text-white' : 'bg-[#f5f4f0] text-[#6c6a66] hover:bg-[#e5e4e0]'}`}>
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill={showSavedOnly ? 'white' : '#1c1c1e'} stroke={showSavedOnly ? 'white' : '#1c1c1e'} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-                    {showSavedOnly ? `Saved (${savedIds.size}) ×` : `Saved (${savedIds.size})`}
-                  </button>
-                )}
-              </>
-            ) : (
-              <>
-                {roomTypes.map(r => (
-                  <button key={r} onClick={() => setActiveRoomType(r)} className={`px-4 py-1.5 rounded-xl text-[13px] font-semibold transition-all ${activeRoomType === r ? 'bg-[#1c1c1e] text-white' : 'bg-[#f5f4f0] text-[#6c6a66] hover:bg-[#e5e4e0] hover:text-[#1c1c1e]'}`}>{r}</button>
-                ))}
-                <div className="ml-auto flex items-center gap-2">
-                  <select value={subSortBy} onChange={e => setSubSortBy(e.target.value)} className="text-[13px] border border-[#e5e4e0] rounded-xl px-3 py-1.5 text-[#1c1c1e] bg-white outline-none cursor-pointer">
-                    {subSortOptions.map(o => <option key={o}>{o}</option>)}
-                  </select>
+          {/* Active filter chips */}
+          {mode === 'rent' && activeFilterCount > 0 && !showFilters && (
+            <div className="flex items-center gap-2 mt-3 flex-wrap">
+              {placeType !== 'apartments' && <span className="flex items-center gap-1.5 px-3 py-1 bg-[#f0efeb] rounded-full text-[12px] font-semibold text-[#1c1c1e]">{placeTypes.find(p => p.id === placeType)?.label} <button onClick={() => setPlaceType('apartments')} className="text-[#9ca3af] hover:text-[#1c1c1e]">×</button></span>}
+              {selectedBed && <span className="flex items-center gap-1.5 px-3 py-1 bg-[#f0efeb] rounded-full text-[12px] font-semibold text-[#1c1c1e]">{selectedBed === 'Studio' ? 'Studio' : `${selectedBed} bed`} <button onClick={() => setSelectedBed('')} className="text-[#9ca3af] hover:text-[#1c1c1e]">×</button></span>}
+              {selectedFloor && <span className="flex items-center gap-1.5 px-3 py-1 bg-[#f0efeb] rounded-full text-[12px] font-semibold text-[#1c1c1e]">Floor {selectedFloor} <button onClick={() => setSelectedFloor('')} className="text-[#9ca3af] hover:text-[#1c1c1e]">×</button></span>}
+              {(priceMin !== 500 || priceMax !== 1100) && <span className="flex items-center gap-1.5 px-3 py-1 bg-[#f0efeb] rounded-full text-[12px] font-semibold text-[#1c1c1e]">${priceMin}–${priceMax}/mo <button onClick={() => { setPriceMin(500); setPriceMaxVal(1100) }} className="text-[#9ca3af] hover:text-[#1c1c1e]">×</button></span>}
+              {selectedArea && <span className="flex items-center gap-1.5 px-3 py-1 bg-[#f0efeb] rounded-full text-[12px] font-semibold text-[#1c1c1e]">{areaOptions.find(a => a.id === selectedArea)?.label} <button onClick={() => setSelectedArea('')} className="text-[#9ca3af] hover:text-[#1c1c1e]">×</button></span>}
+              {activeAvailable !== 'Any' && <span className="flex items-center gap-1.5 px-3 py-1 bg-[#f0efeb] rounded-full text-[12px] font-semibold text-[#1c1c1e]">{activeAvailable} <button onClick={() => setActiveAvailable('Any')} className="text-[#9ca3af] hover:text-[#1c1c1e]">×</button></span>}
+              {(activeWalk !== 'Any' || walkTo !== 'any') && (
+                <span className="flex items-center gap-1.5 px-3 py-1 bg-[#f0efeb] rounded-full text-[12px] font-semibold text-[#1c1c1e]">
+                  {activeWalk !== 'Any' ? activeWalk : ''}
+                  {activeWalk !== 'Any' && walkTo !== 'any' ? ' · ' : ''}
+                  {walkTo !== 'any' ? campusDestOptions.find(d => d.key === walkTo)?.emoji + ' ' + campusDestOptions.find(d => d.key === walkTo)?.label : ''}
+                  <button onClick={() => { setActiveWalk('Any'); setWalkTo('any') }} className="text-[#9ca3af] hover:text-[#1c1c1e]">×</button>
+                </span>
+              )}
+              {verifiedOnly && <span className="flex items-center gap-1.5 px-3 py-1 bg-[#f0efeb] rounded-full text-[12px] font-semibold text-[#1c1c1e]">✓ Verified <button onClick={() => setVerifiedOnly(false)} className="text-[#9ca3af] hover:text-[#1c1c1e]">×</button></span>}
+              {[...amenities].map(k => { const opt = amenityOptions.find(o => o.key === k); return opt ? <span key={k} className="flex items-center gap-1.5 px-3 py-1 bg-[#f0efeb] rounded-full text-[12px] font-semibold text-[#1c1c1e]">{opt.label} <button onClick={() => toggleAmenity(k)} className="text-[#9ca3af] hover:text-[#1c1c1e]">×</button></span> : null })}
+              <button onClick={clearFilters} className="text-[12px] text-[#9ca3af] hover:text-[#1c1c1e] transition-colors">Clear all</button>
+            </div>
+          )}
+
+          {/* Collapsible filter panel */}
+          {mode === 'rent' && showFilters && (
+            <div className="mt-4 p-4 bg-[#f9f8f6] rounded-2xl border border-[#eeecea] space-y-4">
+
+              {/* Place type */}
+              <div className="flex items-center gap-3">
+                <span className="text-[12px] font-semibold text-[#6c6a66] w-16 flex-shrink-0">Type</span>
+                <div className="flex gap-2 flex-wrap">
+                  {placeTypes.map(p => (
+                    <button key={p.id} onClick={() => setPlaceType(p.id)} className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-[13px] font-semibold transition-all ${placeType === p.id ? 'bg-[#1c1c1e] text-white' : 'bg-white text-[#6c6a66] border border-[#e5e4e0] hover:border-[#1c1c1e] hover:text-[#1c1c1e]'}`}>
+                      {p.icon}{p.label}
+                    </button>
+                  ))}
                 </div>
-              </>
-            )}
-          </div>
+              </div>
+
+              {/* Bedrooms */}
+              <div className="flex items-center gap-3">
+                <span className="text-[12px] font-semibold text-[#6c6a66] w-16 flex-shrink-0">Beds</span>
+                <div className="flex gap-2 flex-wrap">
+                  {bedroomOptions.map(b => (
+                    <button key={b} onClick={() => setSelectedBed(selectedBed === b ? '' : b)} className={`px-3.5 py-1.5 rounded-xl text-[13px] font-semibold transition-all ${selectedBed === b ? 'bg-[#1c1c1e] text-white' : 'bg-white text-[#6c6a66] border border-[#e5e4e0] hover:border-[#1c1c1e] hover:text-[#1c1c1e]'}`}>{b}</button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Floor */}
+              <div className="flex items-center gap-3">
+                <span className="text-[12px] font-semibold text-[#6c6a66] w-16 flex-shrink-0">Floor</span>
+                <div className="flex gap-2 flex-wrap">
+                  {floorOptions.map(f => (
+                    <button key={f} onClick={() => setSelectedFloor(selectedFloor === f ? '' : f)} className={`px-3.5 py-1.5 rounded-xl text-[13px] font-semibold transition-all ${selectedFloor === f ? 'bg-[#1c1c1e] text-white' : 'bg-white text-[#6c6a66] border border-[#e5e4e0] hover:border-[#1c1c1e] hover:text-[#1c1c1e]'}`}>{f}</button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Price range */}
+              <div className="flex items-center gap-3">
+                <span className="text-[12px] font-semibold text-[#6c6a66] w-16 flex-shrink-0">Price</span>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <div className="flex items-center gap-1.5 bg-white border border-[#e5e4e0] rounded-xl px-3 py-2 focus-within:border-[#1c1c1e] transition-colors w-28">
+                    <span className="text-[12px] text-[#9ca3af]">$</span>
+                    <input type="number" value={priceMin} min={500} max={priceMax - 50} step={50}
+                      onChange={e => setPriceMin(Math.min(parseInt(e.target.value) || 500, priceMax - 50))}
+                      className="flex-1 text-[13px] text-[#1c1c1e] bg-transparent outline-none w-16" />
+                  </div>
+                  <span className="text-[12px] text-[#9ca3af]">–</span>
+                  <div className="flex items-center gap-1.5 bg-white border border-[#e5e4e0] rounded-xl px-3 py-2 focus-within:border-[#1c1c1e] transition-colors w-28">
+                    <span className="text-[12px] text-[#9ca3af]">$</span>
+                    <input type="number" value={priceMax} min={priceMin + 50} max={2000} step={50}
+                      onChange={e => setPriceMaxVal(Math.max(parseInt(e.target.value) || 1100, priceMin + 50))}
+                      className="flex-1 text-[13px] text-[#1c1c1e] bg-transparent outline-none w-16" />
+                  </div>
+                  <span className="text-[12px] text-[#9ca3af]">/ mo</span>
+                  <div className="flex gap-1.5">
+                    {[700, 800, 900, 1000].map(c => (
+                      <button key={c} onClick={() => { setPriceMin(500); setPriceMaxVal(c) }} className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all ${priceMin === 500 && priceMax === c ? 'bg-[#1c1c1e] text-white' : 'bg-white text-[#6c6a66] border border-[#e5e4e0] hover:border-[#1c1c1e]'}`}>≤${c}</button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Area */}
+              <div className="flex items-center gap-3">
+                <span className="text-[12px] font-semibold text-[#6c6a66] w-16 flex-shrink-0">Area</span>
+                <div className="flex gap-2 flex-wrap">
+                  {areaOptions.map(a => (
+                    <button key={a.id} onClick={() => setSelectedArea(selectedArea === a.id ? '' : a.id)} className={`flex items-center gap-1 px-3.5 py-1.5 rounded-xl text-[13px] font-semibold transition-all ${selectedArea === a.id ? 'bg-[#1c1c1e] text-white' : 'bg-white text-[#6c6a66] border border-[#e5e4e0] hover:border-[#1c1c1e] hover:text-[#1c1c1e]'}`}>
+                      <span>{a.emoji}</span>{a.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Amenities */}
+              <div className="flex items-start gap-3">
+                <span className="text-[12px] font-semibold text-[#6c6a66] w-16 flex-shrink-0 mt-1">Amenities</span>
+                <div className="flex gap-2 flex-wrap">
+                  {amenityOptions.map(a => {
+                    const active = amenities.has(a.key)
+                    return (
+                      <button key={a.key} onClick={() => toggleAmenity(a.key)} className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-[13px] font-semibold transition-all ${active ? 'bg-[#1c1c1e] text-white' : 'bg-white text-[#6c6a66] border border-[#e5e4e0] hover:border-[#1c1c1e] hover:text-[#1c1c1e]'}`}>
+                        {active && <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>}
+                        {a.label}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* Move-in */}
+              <div className="flex items-center gap-3">
+                <span className="text-[12px] font-semibold text-[#6c6a66] w-16 flex-shrink-0">Move-in</span>
+                <div className="flex gap-2 flex-wrap">
+                  {availableOptions.map(o => (
+                    <button key={o} onClick={() => setActiveAvailable(o)} className={`px-3.5 py-1.5 rounded-xl text-[13px] font-semibold transition-all ${activeAvailable === o ? 'bg-[#1c1c1e] text-white' : 'bg-white text-[#6c6a66] border border-[#e5e4e0] hover:border-[#1c1c1e] hover:text-[#1c1c1e]'}`}>{o}</button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Walk to campus */}
+              <div className="flex items-start gap-3">
+                <span className="text-[12px] font-semibold text-[#6c6a66] w-16 flex-shrink-0 mt-1.5">Walk</span>
+                <div className="flex-1 space-y-2">
+                  {/* Destination selector */}
+                  <div className="flex gap-2 flex-wrap">
+                    {campusDestOptions.map(d => (
+                      <button key={d.key} onClick={() => setWalkTo(d.key)} className={`flex items-center gap-1 px-3 py-1.5 rounded-xl text-[12px] font-semibold transition-all ${walkTo === d.key ? 'bg-[#1c1c1e] text-white' : 'bg-white text-[#6c6a66] border border-[#e5e4e0] hover:border-[#1c1c1e] hover:text-[#1c1c1e]'}`}>
+                        <span>{d.emoji}</span>{d.label}
+                      </button>
+                    ))}
+                  </div>
+                  {/* Time selector */}
+                  <div className="flex items-center gap-2">
+                    {walkOptions.map(w => (
+                      <button key={w.label} onClick={() => setActiveWalk(w.label)} className={`px-3.5 py-1.5 rounded-xl text-[13px] font-semibold transition-all ${activeWalk === w.label ? 'bg-[#1c1c1e] text-white' : 'bg-white text-[#6c6a66] border border-[#e5e4e0] hover:border-[#1c1c1e] hover:text-[#1c1c1e]'}`}>{w.label}</button>
+                    ))}
+                    {walkTo !== 'any' && (
+                      <span className="text-[11px] text-[#9ca3af] ml-1">to {campusDestOptions.find(d => d.key === walkTo)?.label}</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Verified toggle */}
+              <div className="flex items-center justify-between bg-white border border-[#e5e4e0] rounded-xl px-4 py-3">
+                <div>
+                  <p className="text-[13px] font-semibold text-[#1c1c1e]">Verified listings only</p>
+                  <p className="text-[11px] text-[#9ca3af] mt-0.5">Show only landlord-verified apartments</p>
+                </div>
+                <button onClick={() => setVerifiedOnly(v => !v)} className={`relative w-11 h-6 rounded-full transition-colors flex-shrink-0 ${verifiedOnly ? 'bg-[#1c1c1e]' : 'bg-[#e5e4e0]'}`}>
+                  <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${verifiedOnly ? 'translate-x-5' : 'translate-x-0.5'}`} />
+                </button>
+              </div>
+
+              {/* Footer */}
+              <div className="flex items-center justify-between pt-2 border-t border-[#eeecea]">
+                <button onClick={clearFilters} className="text-[13px] text-[#9ca3af] hover:text-[#1c1c1e] transition-colors">Clear all</button>
+                <button onClick={() => setShowFilters(false)} className="px-5 py-2 bg-[#1c1c1e] text-white text-[13px] font-semibold rounded-xl hover:bg-[#333] transition-colors">
+                  Show {sortedRent.length} result{sortedRent.length !== 1 ? 's' : ''}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Sublease filter row */}
+          {mode === 'sublease' && (
+            <div className="flex items-center gap-2 mt-4">
+              {roomTypes.map(r => (
+                <button key={r} onClick={() => setActiveRoomType(r)} className={`px-4 py-1.5 rounded-xl text-[13px] font-semibold transition-all ${activeRoomType === r ? 'bg-[#1c1c1e] text-white' : 'bg-[#f5f4f0] text-[#6c6a66] hover:bg-[#e5e4e0] hover:text-[#1c1c1e]'}`}>{r}</button>
+              ))}
+              <div className="ml-auto flex items-center gap-2">
+                <select value={subSortBy} onChange={e => setSubSortBy(e.target.value)} className="text-[13px] border border-[#e5e4e0] rounded-xl px-3 py-1.5 text-[#1c1c1e] bg-white outline-none cursor-pointer">
+                  {subSortOptions.map(o => <option key={o}>{o}</option>)}
+                </select>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

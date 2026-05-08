@@ -12,9 +12,12 @@ const subleases = [
 ]
 const subleaseToMapId: Record<number, number> = { 1: 101, 2: 102, 3: 103, 4: 104, 5: 105, 6: 101 }
 
-const bedFilters  = ['All', 'Studio', '1BR', '2BR+']
-const sortOptions = ['Best Match', 'Price: Low', 'Price: High']
-const periods     = ['All', 'Spring', 'Summer', 'Fall']
+const bedFilters   = ['All', 'Studio', '1BR', '2BR+']
+const sortOptions  = ['Best Match', 'Price: Low', 'Price: High']
+const periods      = ['All', 'Spring', 'Summer', 'Fall']
+const neighborhoods = ['All Areas', 'Green St', 'First St', 'South Campus']
+const priceFilters  = ['Any Price', '≤$700', '≤$800', '≤$900']
+const priceMax: Record<string, number> = { 'Any Price': Infinity, '≤$700': 700, '≤$800': 800, '≤$900': 900 }
 
 interface Props {
   onViewListing:  (id: number) => void
@@ -29,9 +32,11 @@ export default function WebListingsScreen({ onViewListing, savedIds: savedIdsPro
   const [mode, setMode] = useState<'rent' | 'sublease'>('rent')
 
   // ── rent state ──
-  const [activeBed,     setActiveBed]     = useState('All')
-  const [sortBy,        setSortBy]        = useState('Best Match')
-  const [localSavedIds, setLocalSavedIds] = useState<Set<number>>(new Set())
+  const [activeBed,          setActiveBed]          = useState('All')
+  const [activeNeighborhood, setActiveNeighborhood] = useState('All Areas')
+  const [activePrice,        setActivePrice]        = useState('Any Price')
+  const [sortBy,             setSortBy]             = useState('Best Match')
+  const [localSavedIds,      setLocalSavedIds]      = useState<Set<number>>(new Set())
   const savedIds = savedIdsProp ?? localSavedIds
   const [showSavedOnly, setShowSavedOnly] = useState(false)
   const [search,        setSearch]        = useState('')
@@ -75,9 +80,11 @@ export default function WebListingsScreen({ onViewListing, savedIds: savedIdsPro
   // ── rent filtering ──
   const filteredRent = listings.filter(l => {
     const matchesBed = activeBed === 'All' || (activeBed === 'Studio' && l.beds === 'Studio') || (activeBed === '1BR' && l.beds === '1B1B') || (activeBed === '2BR+' && (l.beds === '2B1B' || l.beds === '2B2B'))
+    const matchesNeighborhood = activeNeighborhood === 'All Areas' || l.neighborhood === activeNeighborhood
+    const matchesPrice = l.price <= priceMax[activePrice]
     const matchesSearch = search.trim() === '' || l.name.toLowerCase().includes(search.toLowerCase()) || l.address.toLowerCase().includes(search.toLowerCase()) || l.amenities.some(a => a.toLowerCase().includes(search.toLowerCase()))
     const matchesSaved = !showSavedOnly || savedIds.has(l.id)
-    return matchesBed && matchesSearch && matchesSaved
+    return matchesBed && matchesNeighborhood && matchesPrice && matchesSearch && matchesSaved
   })
   const sortedRent = [...filteredRent].sort((a, b) => sortBy === 'Price: Low' ? a.price - b.price : sortBy === 'Price: High' ? b.price - a.price : 0)
 
@@ -329,12 +336,25 @@ export default function WebListingsScreen({ onViewListing, savedIds: savedIdsPro
             </div>
           </div>
 
-          {/* Filter row */}
-          <div className="flex items-center gap-2 mt-4">
-            {mode === 'rent' ? (
-              <>
+          {/* Filter rows */}
+          {mode === 'rent' ? (
+            <div className="space-y-2 mt-4">
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] font-semibold text-[#9ca3af] w-16 flex-shrink-0">Rooms</span>
                 {bedFilters.map(f => (
                   <button key={f} onClick={() => setActiveBed(f)} className={`px-4 py-1.5 rounded-xl text-[13px] font-semibold transition-all ${activeBed === f ? 'bg-[#1c1c1e] text-white' : 'bg-[#f5f4f0] text-[#6c6a66] hover:bg-[#e5e4e0] hover:text-[#1c1c1e]'}`}>{f}</button>
+                ))}
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] font-semibold text-[#9ca3af] w-16 flex-shrink-0">Budget</span>
+                {priceFilters.map(f => (
+                  <button key={f} onClick={() => setActivePrice(f)} className={`px-4 py-1.5 rounded-xl text-[13px] font-semibold transition-all ${activePrice === f ? 'bg-[#1c1c1e] text-white' : 'bg-[#f5f4f0] text-[#6c6a66] hover:bg-[#e5e4e0] hover:text-[#1c1c1e]'}`}>{f}</button>
+                ))}
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] font-semibold text-[#9ca3af] w-16 flex-shrink-0">Area</span>
+                {neighborhoods.map(n => (
+                  <button key={n} onClick={() => setActiveNeighborhood(n)} className={`px-4 py-1.5 rounded-xl text-[13px] font-semibold transition-all ${activeNeighborhood === n ? 'bg-[#1c1c1e] text-white' : 'bg-[#f5f4f0] text-[#6c6a66] hover:bg-[#e5e4e0] hover:text-[#1c1c1e]'}`}>{n}</button>
                 ))}
                 {savedIds.size > 0 && (
                   <button onClick={() => setShowSavedOnly(s => !s)} className={`ml-auto flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-[13px] font-semibold transition-all ${showSavedOnly ? 'bg-[#1c1c1e] text-white' : 'bg-[#f5f4f0] text-[#6c6a66] hover:bg-[#e5e4e0]'}`}>
@@ -342,19 +362,19 @@ export default function WebListingsScreen({ onViewListing, savedIds: savedIdsPro
                     {showSavedOnly ? `Saved (${savedIds.size}) ×` : `Saved (${savedIds.size})`}
                   </button>
                 )}
-              </>
-            ) : (
-              <>
-                {periods.map(p => (
-                  <button key={p} onClick={() => setActivePeriod(p)} className={`px-4 py-1.5 rounded-xl text-[13px] font-semibold transition-all ${activePeriod === p ? 'bg-[#1c1c1e] text-white' : 'bg-[#f5f4f0] text-[#6c6a66] hover:bg-[#e5e4e0] hover:text-[#1c1c1e]'}`}>{p}</button>
-                ))}
-                <span className="ml-auto flex items-center gap-1.5 text-[12px] text-[#9ca3af]">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                  All verified student-to-student
-                </span>
-              </>
-            )}
-          </div>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 mt-4">
+              {periods.map(p => (
+                <button key={p} onClick={() => setActivePeriod(p)} className={`px-4 py-1.5 rounded-xl text-[13px] font-semibold transition-all ${activePeriod === p ? 'bg-[#1c1c1e] text-white' : 'bg-[#f5f4f0] text-[#6c6a66] hover:bg-[#e5e4e0] hover:text-[#1c1c1e]'}`}>{p}</button>
+              ))}
+              <span className="ml-auto flex items-center gap-1.5 text-[12px] text-[#9ca3af]">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                All verified student-to-student
+              </span>
+            </div>
+          )}
         </div>
       </div>
 
