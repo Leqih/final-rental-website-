@@ -700,8 +700,60 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
         </div>
       )}
 
-      {/* Bottom card strip — hidden in sublease mode (cards shown in left panel) */}
-      {mode !== 'sublease' && renderBottomStrip()}
+      {/* Bottom card strip */}
+      {mode === 'sublease' ? (
+        /* ── Sublease horizontal strip ── */
+        subleasePins.length > 0 && (
+          <div className="absolute bottom-0 left-0 right-0 pb-3" style={{ zIndex: 15 }}>
+            <div className="flex justify-end items-center px-6 pt-2 pb-5 gap-1.5">
+              <span className="text-[11px] font-semibold text-white bg-black/40 backdrop-blur-sm px-2.5 py-1 rounded-lg">
+                {subleasePins.length} sublease{subleasePins.length > 1 ? 's' : ''} available
+              </span>
+            </div>
+            <div className="flex items-stretch px-4 gap-0">
+              {subleasePins.slice(0, 3).map(s => {
+                const isActive = selectedId === s.id
+                return (
+                  <button key={s.id}
+                    onClick={() => {
+                      setSelectedId(s.id)
+                      const coords = coordsForPinsRef.current[s.id]
+                      if (coords && mapRef.current) mapRef.current.flyTo({ center: coords, zoom: 16.5, pitch: 62, bearing: mapRef.current.getBearing(), duration: 700, essential: true })
+                    }}
+                    className={`flex flex-1 min-w-0 rounded-2xl overflow-hidden transition-all h-[136px] mx-2 bg-white text-left ${isActive ? 'ring-2 ring-[#1c1c1e] shadow-xl' : 'shadow-lg hover:shadow-xl'}`}
+                  >
+                    <div className="relative w-[110px] flex-shrink-0 h-full">
+                      <img src={s.img} className="w-full h-full object-cover" />
+                      {s.daysLeft <= 7 && (
+                        <div className="absolute top-2 left-2 bg-red-500 text-white text-[9px] font-black px-2 py-1 rounded-full leading-none">{s.daysLeft}d left</div>
+                      )}
+                    </div>
+                    <div className="flex flex-col justify-between px-3 py-3 flex-1 min-w-0">
+                      <div>
+                        <div className="flex items-start justify-between gap-1 mb-1">
+                          <div className="min-w-0">
+                            <p className="text-[13px] font-bold text-[#1c1c1e] leading-tight truncate">{s.name}</p>
+                            <p className="text-[11px] text-[#9ca3af] leading-tight truncate">{s.address}</p>
+                          </div>
+                          <span className={`flex-shrink-0 text-[9px] font-bold px-2 py-0.5 rounded-full ${s.badgeColor}`}>{s.period}</span>
+                        </div>
+                        <p className="text-[15px] font-black text-[#1c1c1e] leading-tight">${s.price}<span className="text-[11px] font-normal text-[#9ca3af]">/mo</span></p>
+                      </div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-[10px] text-[#6c6a66]">{s.beds}</span>
+                        <span className="text-[10px] text-[#6c6a66]">·</span>
+                        <span className="text-[10px] text-[#6c6a66]">{s.sqft}</span>
+                        {s.furnished && <span className="text-[10px] font-semibold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded-full">Furnished</span>}
+                        <span className="text-[10px] text-[#9ca3af] ml-auto truncate">by {s.postedBy}</span>
+                      </div>
+                    </div>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        )
+      ) : renderBottomStrip()}
     </div>
   );
 }
