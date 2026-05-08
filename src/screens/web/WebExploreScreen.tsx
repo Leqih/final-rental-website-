@@ -931,7 +931,7 @@ export default function WebExploreScreen({ onViewListing: _onViewListing, onNavi
         <Map3DView
           selectedCollege={profile.college}
           profile={profile}
-          onViewListing={(id) => setLocalDetailId(id)}
+          onViewListing={(id) => _onViewListing(id)}
           onReset={() => {}}
           mode={mode}
           subleasePins={subleasePinsForMap}
