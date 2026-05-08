@@ -893,6 +893,7 @@ export default function WebExploreScreen({ onViewListing: _onViewListing, onNavi
             setMessageText(tmpl)
             setMessageTarget(pin)
           }}
+          filteredIds={mode === 'rent' ? filtered.map(l => l.id) : undefined}
           onViewSubleaseDetail={(id) => setLocalSubleaseId(id)}
           onPinSelect={(id) => {
             if (id) window.location.hash = mode === 'sublease' ? `explore/sublease/${id}` : `explore/${id}`;

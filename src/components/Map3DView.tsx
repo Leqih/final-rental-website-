@@ -67,9 +67,10 @@ interface Props {
   onMessagePoster?: (pin: SubleasePin) => void;
   onViewSubleaseDetail?: (id: number) => void;
   onPinSelect?: (id: number | null) => void;
+  filteredIds?: number[];
 }
 
-export default function Map3DView({ selectedCollege, profile, onViewListing, onReset, mode = 'rent', subleasePins = [], highlightPinId, onMessagePoster, onViewSubleaseDetail, onPinSelect }: Props) {
+export default function Map3DView({ selectedCollege, profile, onViewListing, onReset, mode = 'rent', subleasePins = [], highlightPinId, onMessagePoster, onViewSubleaseDetail, onPinSelect, filteredIds }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const buildingMarkerRef = useRef<maplibregl.Marker | null>(null);
@@ -79,6 +80,8 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
   const [, setGuideIdx] = useState(0);
   const [cardPage, setCardPage] = useState(0);
   const [mapTypeFilter, setMapTypeFilter] = useState<'any' | 'studio' | '1br' | '2br+'>('any');
+  // Reset to page 0 when filtered set changes
+  useEffect(() => { setCardPage(0); }, [filteredIds?.join(',')]);
   const [savedIds, setSavedIds] = useState<Set<number>>(new Set());
   const [pinPositions, setPinPositions] = useState<PinPosition[]>([]);
   const pinElemsRef = useRef<Map<number, HTMLDivElement>>(new Map());
@@ -252,6 +255,7 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
 
   const PAGE = 3;
   const typeFilteredListings = listings.filter(l => {
+    if (filteredIds && !filteredIds.includes(l.id)) return false;
     if (mapTypeFilter === 'studio') return l.beds.toLowerCase().includes('studio')
     if (mapTypeFilter === '1br') return l.beds.startsWith('1B')
     if (mapTypeFilter === '2br+') return !l.beds.toLowerCase().includes('studio') && !l.beds.startsWith('1B')
