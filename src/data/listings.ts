@@ -8,7 +8,10 @@ export const imgSunrise = "https://images.unsplash.com/photo-1574362848149-11496
 export const imgGoodwin = "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&q=80";
 export const imgSpring  = "https://images.unsplash.com/photo-1493809842364-78817add7ffb?w=800&q=80";
 export const imgOrchard = "https://images.unsplash.com/photo-1484154218962-a197022b5858?w=800&q=80";
-export const imgGreenLoft = "https://images.unsplash.com/photo-1560185007-cde436f6a4d0?w=800&q=80";
+export const imgGreenLoft  = "https://images.unsplash.com/photo-1560185007-cde436f6a4d0?w=800&q=80";
+export const imgGreenThird = "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&q=80";
+export const imgSixthSt    = "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=80";
+export const imgGreenTerr  = "https://images.unsplash.com/photo-1567767292278-a4f21aa2d36e?w=800&q=80";
 
 export interface Listing {
   id: number;
@@ -210,6 +213,66 @@ export const listings: Listing[] = [
     phone: '(217) 555-0910',
     walkFrom: { eng: 10, bus: 7, las: 8, agr: 18, med: 7, art: 9 },
     pins: { all: { x: 62, y: 48 }, green: { x: 64, y: 42 }, first: { x: 60, y: 46 }, south: { x: 58, y: 52 }, downtown: { x: 62, y: 38 } },
+    neighborhood: 'green',
+  },
+  {
+    id: 10,
+    img: imgGreenThird,
+    price: 840,
+    name: 'Green & Third Apartments',
+    beds: '2B2B',
+    badge: 'Budget',
+    badgeColor: 'bg-amber-100 text-amber-800',
+    desc: 'One of the most affordable 2B2B options on Green Street. Newly renovated bathrooms, large windows, and a rooftop terrace. Each bedroom comfortably fits a full bed and desk — ideal for two students splitting rent.',
+    address: '405 E Green St',
+    sqft: '900 sqft',
+    floor: 'Floor 2 of 4',
+    available: 'Aug 2026',
+    amenities: ['Renovated bathrooms', 'Rooftop terrace', 'Coin laundry', 'Near bus stop', 'Air conditioning', 'High-speed Wi-Fi'],
+    landlord: 'Green Street Properties',
+    phone: '(217) 555-1001',
+    walkFrom: { eng: 11, bus: 7, las: 8, agr: 19, med: 7, art: 10 },
+    pins: { all: { x: 60, y: 50 }, green: { x: 62, y: 44 }, first: { x: 57, y: 48 }, south: { x: 59, y: 54 }, downtown: { x: 60, y: 40 } },
+    neighborhood: 'green',
+  },
+  {
+    id: 11,
+    img: imgSixthSt,
+    price: 895,
+    name: 'Sixth Street Commons',
+    beds: '2B2B',
+    badge: 'New',
+    badgeColor: 'bg-blue-100 text-blue-700',
+    desc: 'Brand new build on the east end of Green Street. Two private baths, modern open-plan kitchen, and floor-to-ceiling windows. Best natural light on the block. Steps from bars, coffee shops, and the MTD bus.',
+    address: '601 E Green St',
+    sqft: '970 sqft',
+    floor: 'Floor 4 of 6',
+    available: 'Aug 2026',
+    amenities: ['Floor-to-ceiling windows', 'Open-plan kitchen', 'In-unit laundry', 'Gym', 'Package lockers', 'Bike storage', 'Pet friendly', 'Smart thermostat'],
+    landlord: 'Campus Realty Group',
+    phone: '(217) 555-1101',
+    walkFrom: { eng: 10, bus: 6, las: 9, agr: 17, med: 7, art: 11 },
+    pins: { all: { x: 68, y: 52 }, green: { x: 70, y: 46 }, first: { x: 65, y: 50 }, south: { x: 66, y: 56 }, downtown: { x: 68, y: 42 } },
+    neighborhood: 'green',
+  },
+  {
+    id: 12,
+    img: imgGreenTerr,
+    price: 820,
+    name: 'Green Terrace Co-Living',
+    beds: '2B2B',
+    badge: 'Best Value',
+    badgeColor: 'bg-sky-100 text-sky-700',
+    desc: 'Most affordable 2B2B on Green Street with surprisingly generous space. Great for two friends on a budget — shared living and kitchen area, private baths, courtyard access. Responsive on-site management and a tight-knit community.',
+    address: '209 E Green St',
+    sqft: '860 sqft',
+    floor: 'Floor 1 of 3',
+    available: 'Aug 2026',
+    amenities: ['Courtyard access', 'On-site management', 'Laundry in building', 'Near bus stop', 'Utilities included', 'Study room'],
+    landlord: 'UIUC Housing Co.',
+    phone: '(217) 555-1201',
+    walkFrom: { eng: 13, bus: 8, las: 7, agr: 20, med: 8, art: 9 },
+    pins: { all: { x: 54, y: 54 }, green: { x: 56, y: 48 }, first: { x: 51, y: 52 }, south: { x: 53, y: 58 }, downtown: { x: 54, y: 44 } },
     neighborhood: 'green',
   },
 ];

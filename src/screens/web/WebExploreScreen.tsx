@@ -48,7 +48,7 @@ interface Area {
 }
 
 const areas: Area[] = [
-  { id: 'green', label: 'Green Street', emoji: '🏙️', color: 'bg-emerald-100', textColor: 'text-emerald-700', listingIds: [2, 3] },
+  { id: 'green', label: 'Green Street', emoji: '🏙️', color: 'bg-emerald-100', textColor: 'text-emerald-700', listingIds: [2, 3, 9, 10, 11, 12] },
   { id: 'quad', label: 'Main Quad', emoji: '🎓', color: 'bg-purple-100', textColor: 'text-purple-700', listingIds: [4, 7] },
   { id: 'first', label: 'First Street', emoji: '🏘️', color: 'bg-blue-100', textColor: 'text-blue-700', listingIds: [1, 5] },
   { id: 'chalmers', label: 'Chalmers', emoji: '🌆', color: 'bg-orange-100', textColor: 'text-orange-700', listingIds: [6] },
