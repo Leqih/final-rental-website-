@@ -396,7 +396,7 @@ export default function WebListingsScreen({ onViewListing, savedIds: savedIdsPro
 
               {/* Filter toggle (rent only) */}
               {mode === 'rent' && (
-                <button onClick={() => setShowFilters(s => !s)} className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-[13px] font-semibold transition-all border ${showFilters || activeFilterCount > 0 ? 'bg-[#1c1c1e] text-white border-[#1c1c1e]' : 'bg-white text-[#1c1c1e] border-[#e5e4e0] hover:border-[#1c1c1e]'}`}>
+                <button onClick={() => setShowFilters(s => { const next = !s; window.location.hash = next ? 'listings/filter' : 'listings'; return next; })} className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-[13px] font-semibold transition-all border ${showFilters || activeFilterCount > 0 ? 'bg-[#1c1c1e] text-white border-[#1c1c1e]' : 'bg-white text-[#1c1c1e] border-[#e5e4e0] hover:border-[#1c1c1e]'}`}>
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
                   Filters
                   {activeFilterCount > 0 && <span className={`w-4 h-4 rounded-full text-[10px] font-bold flex items-center justify-center ${showFilters || activeFilterCount > 0 ? 'bg-white text-[#1c1c1e]' : 'bg-[#1c1c1e] text-white'}`}>{activeFilterCount}</span>}
@@ -573,7 +573,7 @@ export default function WebListingsScreen({ onViewListing, savedIds: savedIdsPro
               {/* Footer */}
               <div className="flex items-center justify-between pt-2 border-t border-[#eeecea]">
                 <button onClick={clearFilters} className="text-[13px] text-[#9ca3af] hover:text-[#1c1c1e] transition-colors">Clear all</button>
-                <button onClick={() => setShowFilters(false)} className="px-5 py-2 bg-[#1c1c1e] text-white text-[13px] font-semibold rounded-xl hover:bg-[#333] transition-colors">
+                <button onClick={() => { setShowFilters(false); window.location.hash = 'listings'; }} className="px-5 py-2 bg-[#1c1c1e] text-white text-[13px] font-semibold rounded-xl hover:bg-[#333] transition-colors">
                   Show {sortedRent.length} result{sortedRent.length !== 1 ? 's' : ''}
                 </button>
               </div>
