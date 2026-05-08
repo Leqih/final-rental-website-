@@ -80,7 +80,7 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
   const [, setGuideIdx] = useState(0);
 
   const [mapTypeFilter, setMapTypeFilter] = useState<'any' | 'studio' | '1br' | '2br+'>('any');
-  // Reset to page 0 when filtered set changes
+  const [priceSort, setPriceSort] = useState<'default' | 'asc' | 'desc'>('default');
   const [savedIds, setSavedIds] = useState<Set<number>>(new Set());
   const [pinPositions, setPinPositions] = useState<PinPosition[]>([]);
   const pinElemsRef = useRef<Map<number, HTMLDivElement>>(new Map());
@@ -258,16 +258,32 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
     if (mapTypeFilter === '2br+') return !l.beds.toLowerCase().includes('studio') && !l.beds.startsWith('1B')
     return true
   });
-  const allCards = profile
-    ? rankedListings.filter(l => typeFilteredListings.some(t => t.id === l.id))
-    : typeFilteredListings;
+  const sortedCards = (() => {
+    const base = profile
+      ? rankedListings.filter(l => typeFilteredListings.some(t => t.id === l.id))
+      : typeFilteredListings;
+    if (priceSort === 'asc') return [...base].sort((a, b) => a.price - b.price);
+    if (priceSort === 'desc') return [...base].sort((a, b) => b.price - a.price);
+    return base;
+  })();
+  const allCards = sortedCards;
   const renderBottomStrip = () => (
     <div className="absolute bottom-0 left-0 right-0 pb-3" style={{ zIndex: 15 }}>
-      {profile && (
-        <div className="flex justify-end px-5 pb-2">
-          <button onClick={() => { setSelectedId(null); onReset(); }} className="h-7 px-2.5 rounded-xl bg-red-50 text-red-500 text-[10px] font-semibold">Reset</button>
+      {/* Sort + Reset row */}
+      <div className="flex items-center justify-between px-5 pb-2">
+        <div className="flex items-center gap-1.5">
+          <span className="text-[10px] text-[#9ca3af] font-medium">Sort:</span>
+          {(['default', 'asc', 'desc'] as const).map(s => (
+            <button key={s} onClick={() => setPriceSort(s)}
+              className={`h-6 px-2 rounded-lg text-[10px] font-semibold transition-all ${priceSort === s ? 'bg-[#1c1c1e] text-white' : 'bg-white/80 text-[#6c6a66] border border-[#e8e7e3] hover:border-[#1c1c1e]'}`}>
+              {s === 'default' ? 'Best match' : s === 'asc' ? '$ Low→High' : '$ High→Low'}
+            </button>
+          ))}
         </div>
-      )}
+        {profile && (
+          <button onClick={() => { setSelectedId(null); onReset(); setPriceSort('default'); }} className="h-6 px-2.5 rounded-lg bg-red-50 text-red-500 text-[10px] font-semibold">Reset</button>
+        )}
+      </div>
       {/* Horizontally scrollable card strip */}
       <div
         className="flex gap-3 px-4 overflow-x-auto"
