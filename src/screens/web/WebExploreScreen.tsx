@@ -210,7 +210,12 @@ export default function WebExploreScreen({ onViewListing: _onViewListing, onNavi
   const [furnishedOnly, setFurnishedOnly] = useState(false)
   const [subleaseBed, setSubleaseBed] = useState<string>('')
   const [subleaseArea, setSubleaseArea] = useState<string>('')
+  const [subleasePriceMin, setSubleasePriceMin] = useState(400)
   const [subleasePriceMax, setSubleasePriceMax] = useState(900)
+  const [subMinInput, setSubMinInput] = useState('400')
+  const [subMaxInput, setSubMaxInput] = useState('900')
+  const subMinDebounce = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const subMaxDebounce = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const [panelCollapsed, setPanelCollapsed] = useState(false)
   const [localSavedIds, setLocalSavedIds] = useState<Set<number>>(new Set())
@@ -269,7 +274,7 @@ export default function WebExploreScreen({ onViewListing: _onViewListing, onNavi
     }
     if (selectedDuration && s.duration < selectedDuration) return false
     if (furnishedOnly && !s.furnished) return false
-    if (s.price > subleasePriceMax) return false
+    if (s.price < subleasePriceMin || s.price > subleasePriceMax) return false
     return true
   })
 
@@ -677,17 +682,76 @@ export default function WebExploreScreen({ onViewListing: _onViewListing, onNavi
                   </div>
                 </div>
 
-                {/* Price max */}
+                {/* Price range */}
                 <div>
                   <div className="flex items-center justify-between mb-3">
-                    <p className="text-sm font-bold text-[#1c1c1e]">Max Budget</p>
-                    <span className="text-[13px] font-black text-[#1c1c1e]">${subleasePriceMax}<span className="text-[10px] font-normal text-[#9ca3af]">/mo</span></span>
+                    <p className="text-sm font-bold text-[#1c1c1e]">Rental Price</p>
+                    <span className="text-[11px] font-medium text-[#9ca3af]">Monthly</span>
                   </div>
-                  <div className="relative h-1.5 bg-[#e8e7e3] rounded-full mb-1 mx-1">
-                    <div className="absolute h-full bg-[#1c1c1e] rounded-full" style={{ left: 0, right: `${100 - ((subleasePriceMax - 400) / 700) * 100}%` }} />
-                    <input type="range" min={400} max={1100} step={25} value={subleasePriceMax} onChange={e => setSubleasePriceMax(Number(e.target.value))} className="absolute inset-0 w-full opacity-0 cursor-pointer h-full" />
+                  {/* Dual-range slider */}
+                  <div className="relative h-1.5 bg-[#e8e7e3] rounded-full mb-4 mx-1">
+                    <div className="absolute h-full bg-[#1c1c1e] rounded-full" style={{ left: `${((subleasePriceMin - 400) / 700) * 100}%`, right: `${100 - ((subleasePriceMax - 400) / 700) * 100}%` }} />
+                    <input type="range" min={400} max={1100} step={25} value={subleasePriceMin}
+                      onChange={e => { const v = Math.min(Number(e.target.value), subleasePriceMax - 50); setSubleasePriceMin(v); setSubMinInput(String(v)) }}
+                      className="absolute inset-0 w-full opacity-0 cursor-pointer h-full"
+                      style={{ zIndex: ((subleasePriceMax - subleasePriceMin) / 700) < 0.15 ? 5 : 2 }} />
+                    <input type="range" min={400} max={1100} step={25} value={subleasePriceMax}
+                      onChange={e => { const v = Math.max(Number(e.target.value), subleasePriceMin + 50); setSubleasePriceMax(v); setSubMaxInput(String(v)) }}
+                      className="absolute inset-0 w-full opacity-0 cursor-pointer h-full"
+                      style={{ zIndex: ((subleasePriceMax - subleasePriceMin) / 700) < 0.15 ? 2 : 3 }} />
+                    <div className="absolute top-1/2 -translate-y-1/2 w-4 h-4 bg-white border-2 border-[#1c1c1e] rounded-full shadow-md pointer-events-none" style={{ left: `calc(${((subleasePriceMin - 400) / 700) * 100}% - 8px)` }} />
                     <div className="absolute top-1/2 -translate-y-1/2 w-4 h-4 bg-white border-2 border-[#1c1c1e] rounded-full shadow-md pointer-events-none" style={{ left: `calc(${((subleasePriceMax - 400) / 700) * 100}% - 8px)` }} />
                   </div>
+                  {/* Editable MIN / MAX inputs */}
+                  <div className="flex gap-2">
+                    <label className="flex-1 border border-[#e8e7e3] rounded-2xl px-3 py-2.5 cursor-text focus-within:border-[#1c1c1e] transition-colors">
+                      <p className="text-[10px] text-[#9ca3af] font-semibold uppercase tracking-wider leading-none mb-1">Min</p>
+                      <div className="flex items-center gap-0.5">
+                        <span className="text-[13px] font-bold text-[#9ca3af]">$</span>
+                        <input type="number" min={400} max={subleasePriceMax - 50} step={25}
+                          value={subMinInput}
+                          onChange={e => {
+                            setSubMinInput(e.target.value)
+                            if (subMinDebounce.current) clearTimeout(subMinDebounce.current)
+                            subMinDebounce.current = setTimeout(() => {
+                              const v = Math.min(Math.max(parseInt(e.target.value) || 400, 400), subleasePriceMax - 50)
+                              setSubleasePriceMin(v); setSubMinInput(String(v))
+                            }, 350)
+                          }}
+                          onBlur={() => {
+                            if (subMinDebounce.current) clearTimeout(subMinDebounce.current)
+                            const v = Math.min(Math.max(parseInt(subMinInput) || 400, 400), subleasePriceMax - 50)
+                            setSubleasePriceMin(v); setSubMinInput(String(v))
+                          }}
+                          className="w-full text-[14px] font-bold text-[#1c1c1e] bg-transparent outline-none leading-none"
+                        />
+                      </div>
+                    </label>
+                    <label className="flex-1 border-2 border-[#1c1c1e] rounded-2xl px-3 py-2.5 cursor-text focus-within:border-[#1c1c1e] transition-colors">
+                      <p className="text-[10px] text-[#9ca3af] font-semibold uppercase tracking-wider leading-none mb-1">Max</p>
+                      <div className="flex items-center gap-0.5">
+                        <span className="text-[13px] font-bold text-[#9ca3af]">$</span>
+                        <input type="number" min={subleasePriceMin + 50} max={1100} step={25}
+                          value={subMaxInput}
+                          onChange={e => {
+                            setSubMaxInput(e.target.value)
+                            if (subMaxDebounce.current) clearTimeout(subMaxDebounce.current)
+                            subMaxDebounce.current = setTimeout(() => {
+                              const v = Math.max(Math.min(parseInt(e.target.value) || 900, 1100), subleasePriceMin + 50)
+                              setSubleasePriceMax(v); setSubMaxInput(String(v))
+                            }, 350)
+                          }}
+                          onBlur={() => {
+                            if (subMaxDebounce.current) clearTimeout(subMaxDebounce.current)
+                            const v = Math.max(Math.min(parseInt(subMaxInput) || 900, 1100), subleasePriceMin + 50)
+                            setSubleasePriceMax(v); setSubMaxInput(String(v))
+                          }}
+                          className="w-full text-[14px] font-bold text-[#1c1c1e] bg-transparent outline-none leading-none"
+                        />
+                      </div>
+                    </label>
+                  </div>
+                  <p className="text-[11px] text-[#9ca3af] text-right mt-2">→ <span className="font-semibold text-[#1c1c1e]">{filteredSubleases.length}</span> sublease{filteredSubleases.length !== 1 ? 's' : ''} match</p>
                 </div>
 
                 {/* Area */}
