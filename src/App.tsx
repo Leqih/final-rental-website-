@@ -26,7 +26,9 @@ function parseHash(): { tab: Tab; listingId: number | null; listingTab: string |
     const id = parseInt(parts[1]);
     return { tab: 'listings', listingId: isNaN(id) ? null : id, listingTab: parts[2] || 'overview' };
   }
-  const tab = VALID_TABS.includes(hash as Tab) ? (hash as Tab) : 'home';
+  // Support sub-paths like explore/sublease, explore/filter, listings/filter
+  const base = hash.split('/')[0] as Tab;
+  const tab = VALID_TABS.includes(base) ? base : 'home';
   return { tab, listingId: null, listingTab: null };
 }
 
