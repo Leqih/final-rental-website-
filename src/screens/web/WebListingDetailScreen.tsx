@@ -94,14 +94,17 @@ interface Props {
   selectedCollegeId?: string | null
   onNavigate?: (tab: string, search?: string) => void
   onViewOnMap?: (id: number) => void
+  onTabChange?: (tab: string) => void
 }
 
 type Tab = 'overview' | 'walk' | 'amenities' | 'reviews' | 'apply'
 
-export default function WebListingDetailScreen({ listing, onBack, selectedCollegeId, onNavigate, onViewOnMap }: Props) {
+export default function WebListingDetailScreen({ listing, onBack, selectedCollegeId, onNavigate, onViewOnMap, onTabChange }: Props) {
   const [saved, setSaved] = useState(false)
   const [photoIdx, setPhotoIdx] = useState(0)
   const [activeTab, setActiveTab] = useState<Tab>('overview')
+
+  const switchTab = (t: Tab) => { setActiveTab(t); onTabChange?.(t); }
   const [applyStep, setApplyStep] = useState<'tour' | 'info' | 'done'>('tour')
   const [tourDate, setTourDate] = useState('')
   const [tourTime, setTourTime] = useState('')
@@ -256,8 +259,8 @@ export default function WebListingDetailScreen({ listing, onBack, selectedColleg
                   View on map
                 </button>
               )}
-              <button onClick={() => setActiveTab('apply')} className="px-4 py-2 bg-[#f5f4f0] text-[#1c1c1e] text-[12px] font-semibold rounded-xl hover:bg-[#e5e4e0] transition-colors">Schedule Tour</button>
-              <button onClick={() => setActiveTab('apply')} className="px-4 py-2 bg-[#1c1c1e] text-white text-[12px] font-semibold rounded-xl hover:bg-[#333] transition-colors">Apply Now →</button>
+              <button onClick={() => switchTab('apply')} className="px-4 py-2 bg-[#f5f4f0] text-[#1c1c1e] text-[12px] font-semibold rounded-xl hover:bg-[#e5e4e0] transition-colors">Schedule Tour</button>
+              <button onClick={() => switchTab('apply')} className="px-4 py-2 bg-[#1c1c1e] text-white text-[12px] font-semibold rounded-xl hover:bg-[#333] transition-colors">Apply Now →</button>
             </div>
           </div>
 
@@ -266,7 +269,7 @@ export default function WebListingDetailScreen({ listing, onBack, selectedColleg
             {tabs.map(t => (
               <button
                 key={t.id}
-                onClick={() => setActiveTab(t.id)}
+                onClick={() => switchTab(t.id)}
                 className={`py-2.5 text-[13px] font-semibold whitespace-nowrap border-b-2 -mb-px transition-all ${
                   activeTab === t.id
                     ? 'border-[#1c1c1e] text-[#1c1c1e]'
@@ -323,7 +326,7 @@ export default function WebListingDetailScreen({ listing, onBack, selectedColleg
                       ))}
                     </div>
                     {listing.amenities.length > 4 && (
-                      <button onClick={() => setActiveTab('amenities')} className="mt-2 text-[12px] font-semibold text-[#1c1c1e] hover:underline">
+                      <button onClick={() => switchTab('amenities')} className="mt-2 text-[12px] font-semibold text-[#1c1c1e] hover:underline">
                         +{listing.amenities.length - 4} more amenities →
                       </button>
                     )}
@@ -353,7 +356,7 @@ export default function WebListingDetailScreen({ listing, onBack, selectedColleg
                 <div>
                   <div className="flex items-center justify-between mb-3">
                     <p className="text-[11px] font-bold text-[#9ca3af] uppercase tracking-widest">Student reviews</p>
-                    <button onClick={() => setActiveTab('reviews')} className="text-[12px] font-semibold text-[#1c1c1e] hover:underline">See all ({reviews.length}) →</button>
+                    <button onClick={() => switchTab('reviews')} className="text-[12px] font-semibold text-[#1c1c1e] hover:underline">See all ({reviews.length}) →</button>
                   </div>
                   <div className="bg-[#f9f8f6] rounded-2xl p-4">
                     {reviews.slice(0, 1).map((r, i) => (

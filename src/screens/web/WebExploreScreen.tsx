@@ -479,7 +479,7 @@ export default function WebExploreScreen({ onViewListing: _onViewListing, onNavi
               {(['rent', 'sublease'] as const).map(m => (
                 <button
                   key={m}
-                  onClick={() => setMode(m)}
+                  onClick={() => { setMode(m); window.location.hash = m === 'sublease' ? 'explore/sublease' : 'explore'; }}
                   className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all capitalize ${mode === m ? 'bg-[#1c1c1e] text-white shadow-sm' : 'text-[#6c6a66] hover:text-[#1c1c1e]'}`}
                 >
                   {m === 'rent' ? 'Rent' : 'Sublease'}

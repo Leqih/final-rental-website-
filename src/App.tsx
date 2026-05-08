@@ -17,11 +17,28 @@ import WebSavedScreen from './screens/web/WebSavedScreen';
 import { listings } from './data/listings';
 
 type Tab = 'home' | 'explore' | 'listings' | 'community' | 'messages' | 'saved';
+const VALID_TABS: Tab[] = ['home', 'explore', 'listings', 'community', 'messages', 'saved'];
+
+function parseHash(): { tab: Tab; listingId: number | null; listingTab: string | null } {
+  const hash = window.location.hash.slice(1);
+  if (hash.startsWith('listing/')) {
+    const parts = hash.split('/');
+    const id = parseInt(parts[1]);
+    return { tab: 'listings', listingId: isNaN(id) ? null : id, listingTab: parts[2] || 'overview' };
+  }
+  const tab = VALID_TABS.includes(hash as Tab) ? (hash as Tab) : 'home';
+  return { tab, listingId: null, listingTab: null };
+}
+
+function setHash(hash: string) {
+  if (window.location.hash !== '#' + hash) window.location.hash = hash;
+}
 
 function App() {
   const isMobile = useIsMobile();
-  const [activeTab, setActiveTab] = useState<Tab>('home');
-  const [detailListingId, setDetailListingId] = useState<number | null>(null);
+  const initial = parseHash();
+  const [activeTab, setActiveTab] = useState<Tab>(initial.tab);
+  const [detailListingId, setDetailListingId] = useState<number | null>(initial.listingId);
   const [detailCollegeId, setDetailCollegeId] = useState<string | null>(null);
   const [mapListingId, setMapListingId] = useState<number | null>(null);
   const [mapSubleaseId, setMapSubleaseId] = useState<number | null>(null);
@@ -29,6 +46,20 @@ function App() {
   const [communitySearch, setCommunitySearch] = useState('');
   const [visible, setVisible] = useState(true);
   const pendingTab = useRef<Tab | null>(null);
+
+  // Sync state when user presses browser back/forward
+  useEffect(() => {
+    const onHashChange = () => {
+      const { tab, listingId } = parseHash();
+      setDetailListingId(listingId);
+      if (tab !== activeTab) {
+        setVisible(false);
+        pendingTab.current = tab;
+      }
+    };
+    window.addEventListener('hashchange', onHashChange);
+    return () => window.removeEventListener('hashchange', onHashChange);
+  }, [activeTab]);
 
   const toggleSave = (id: number) => {
     setSavedIds(prev => {
@@ -39,6 +70,7 @@ function App() {
   };
 
   const navigate = (tab: string) => {
+    setHash(tab);
     if (tab === activeTab) return;
     setVisible(false);
     pendingTab.current = tab as Tab;
@@ -56,11 +88,15 @@ function App() {
   }, [visible]);
 
   const openListing = (id: number, collegeId?: string | null) => {
+    setHash(`listing/${id}`);
     setDetailListingId(id);
     setDetailCollegeId(collegeId ?? null);
   };
 
-  const closeListing = () => setDetailListingId(null);
+  const closeListing = () => {
+    setHash(activeTab);
+    setDetailListingId(null);
+  };
 
   const detailListing = detailListingId != null ? listings.find(l => l.id === detailListingId) : null;
 
@@ -83,6 +119,7 @@ function App() {
                   selectedCollegeId={detailCollegeId}
                   onNavigate={(tab, search?) => { if (search) setCommunitySearch(search); closeListing(); navigate(tab); }}
                   onViewOnMap={(id) => { setMapListingId(id); closeListing(); navigate('explore'); }}
+                  onTabChange={(t) => setHash(`listing/${detailListingId}/${t}`)}
                 />
               </div>
             ) : (
