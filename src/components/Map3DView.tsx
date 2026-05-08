@@ -78,10 +78,9 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
   const [is3D, setIs3D] = useState(true);
   const [mapLoaded, setMapLoaded] = useState(false);
   const [, setGuideIdx] = useState(0);
-  const [cardPage, setCardPage] = useState(0);
+
   const [mapTypeFilter, setMapTypeFilter] = useState<'any' | 'studio' | '1br' | '2br+'>('any');
   // Reset to page 0 when filtered set changes
-  useEffect(() => { setCardPage(0); }, [filteredIds?.join(',')]);
   const [savedIds, setSavedIds] = useState<Set<number>>(new Set());
   const [pinPositions, setPinPositions] = useState<PinPosition[]>([]);
   const pinElemsRef = useRef<Map<number, HTMLDivElement>>(new Map());
@@ -222,7 +221,6 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
       }).filter((p): p is PinPosition => p !== null);
       setPinPositions(positions);
     }
-    setCardPage(0);
     setSelectedId(null);
   }, [mode, subleasePins, mapLoaded]);
 
@@ -253,7 +251,6 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
     mapRef.current.flyTo({ center: coords, zoom: 17, pitch: 65, bearing: 30, duration: 900, essential: true });
   }, []);
 
-  const PAGE = 3;
   const typeFilteredListings = listings.filter(l => {
     if (filteredIds && !filteredIds.includes(l.id)) return false;
     if (mapTypeFilter === 'studio') return l.beds.toLowerCase().includes('studio')
@@ -264,39 +261,30 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
   const allCards = profile
     ? rankedListings.filter(l => typeFilteredListings.some(t => t.id === l.id))
     : typeFilteredListings;
-  const totalPages = Math.ceil(allCards.length / PAGE);
-  const pageCards = allCards.slice(cardPage * PAGE, cardPage * PAGE + PAGE);
-
   const renderBottomStrip = () => (
     <div className="absolute bottom-0 left-0 right-0 pb-3" style={{ zIndex: 15 }}>
-      {/* Nav row — sits above the cards, right-aligned, 20px gap below */}
-      <div className="flex justify-end items-center px-6 pt-2 pb-5 gap-1.5">
-        {profile && (
-          <button onClick={() => { setSelectedId(null); onReset(); setCardPage(0); }} className="h-8 px-2.5 rounded-xl bg-red-50 text-red-500 text-[10px] font-semibold mr-1">Reset</button>
-        )}
-        <button onClick={() => setCardPage(p => Math.max(0, p - 1))} disabled={cardPage === 0}
-          className="w-8 h-8 rounded-xl bg-[#f5f4f0] border border-[#e8e7e3] flex items-center justify-center disabled:opacity-30 hover:bg-[#ebe9e4] transition-colors">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#1c1c1e" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-        </button>
-        <button onClick={() => setCardPage(p => Math.min(totalPages - 1, p + 1))} disabled={cardPage >= totalPages - 1}
-          className="w-8 h-8 rounded-xl bg-[#f5f4f0] border border-[#e8e7e3] flex items-center justify-center disabled:opacity-30 hover:bg-[#ebe9e4] transition-colors">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#1c1c1e" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-        </button>
-      </div>
-
-      {/* Cards row */}
-      <div className="flex items-stretch px-4">
-        {pageCards.map((l, pi) => {
-          const i = cardPage * PAGE + pi;
+      {profile && (
+        <div className="flex justify-end px-5 pb-2">
+          <button onClick={() => { setSelectedId(null); onReset(); }} className="h-7 px-2.5 rounded-xl bg-red-50 text-red-500 text-[10px] font-semibold">Reset</button>
+        </div>
+      )}
+      {/* Horizontally scrollable card strip */}
+      <div
+        className="flex gap-3 px-4 overflow-x-auto"
+        style={{ scrollSnapType: 'x mandatory', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+      >
+        <style>{`.map-strip::-webkit-scrollbar { display: none }`}</style>
+        {allCards.map((l, i) => {
           const s = profile ? scores[l.id] : 0;
           const isActive = selectedId === l.id;
           const walkMins = activeCollege ? l.walkFrom[activeCollege.id] : null;
           return (
             <button key={l.id}
               onClick={() => { setSelectedId(l.id); flyTo(l.id); setGuideIdx(i); }}
-              className={`flex flex-1 min-w-0 rounded-2xl overflow-hidden transition-all h-[136px] mx-2 bg-white text-left ${isActive ? 'ring-2 ring-[#1c1c1e] shadow-xl' : 'shadow-lg hover:shadow-xl'}`}
+              style={{ scrollSnapAlign: 'start', flexShrink: 0 }}
+              className={`flex w-[260px] rounded-2xl overflow-hidden transition-all h-[136px] bg-white text-left ${isActive ? 'ring-2 ring-[#1c1c1e] shadow-xl' : 'shadow-lg hover:shadow-xl'}`}
             >
-              <div className="relative w-[120px] flex-shrink-0 h-full">
+              <div className="relative w-[110px] flex-shrink-0 h-full">
                 <img src={l.img} className="w-full h-full object-cover" />
                 {profile && i === 0 && (
                   <div className="absolute top-2 left-2 bg-green-500 text-white text-[9px] font-black px-2 py-1 rounded-full leading-none">★ #1</div>
@@ -337,6 +325,8 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
             </button>
           );
         })}
+        {/* trailing spacer so last card doesn't hug the edge */}
+        <div style={{ flexShrink: 0, width: 4 }} />
       </div>
     </div>
   );
@@ -386,7 +376,7 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
             { id: '2br+' as const, label: '2BR+', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M2 4h20v16H2z"/><path d="M12 4v16"/></svg> },
           ] as const).map(t => (
             <button key={t.id}
-              onClick={() => { setMapTypeFilter(t.id); setCardPage(0); }}
+              onClick={() => { setMapTypeFilter(t.id); }}
               className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-md border transition-all ${
                 mapTypeFilter === t.id ? 'bg-[#1c1c1e] text-white border-[#1c1c1e]' : 'bg-white text-[#6c6a66] border-black/6 hover:text-[#1c1c1e]'
               }`}
