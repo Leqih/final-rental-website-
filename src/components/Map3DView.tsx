@@ -474,6 +474,8 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
     mapRef.current.flyTo({ center: coords, zoom: 17, pitch: 65, bearing: 30, duration: 900, essential: true });
   }, []);
 
+  const activeCollege = profile?.college ?? selectedCollege ?? pickedCollege;
+
   const typeFilteredListings = listings.filter(l => {
     if (filteredIds && !filteredIds.includes(l.id)) return false;
     if (activeZoneId && getListingZone(listingCoords[l.id])?.id !== activeZoneId) return false;
@@ -578,7 +580,6 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
   const selectedListing = listings.find(l => l.id === selectedId) ?? null;
   const selectedScore = selectedListing && profile ? scores[selectedListing.id] : 0;
   const selectedReasons = selectedListing && profile ? matchReasons(selectedListing, profile) : [];
-  const activeCollege = profile?.college ?? selectedCollege ?? pickedCollege;
 
   return (
     <div className="relative flex-1 overflow-hidden flex flex-col select-none">
