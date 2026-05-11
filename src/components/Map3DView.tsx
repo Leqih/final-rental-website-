@@ -400,9 +400,6 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
     }, 300);
   }, [profile, mapLoaded]);
 
-  // effectiveZoneId: zone chip click OR walk-panel college pick both dim other zones
-  const effectiveZoneId = activeZoneId ?? activeCollege?.id ?? null;
-
   // Toggle campus district zones visibility + position labels
   useEffect(() => {
     if (!mapLoaded || !mapRef.current) return;
@@ -500,6 +497,8 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
   }, []);
 
   const activeCollege = profile?.college ?? selectedCollege ?? pickedCollege;
+  // effectiveZoneId: zone chip click OR walk-panel college pick both dim other zones
+  const effectiveZoneId = activeZoneId ?? activeCollege?.id ?? null;
 
   const typeFilteredListings = listings.filter(l => {
     if (filteredIds && !filteredIds.includes(l.id)) return false;
