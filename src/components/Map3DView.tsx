@@ -650,6 +650,7 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
             {campusZones.map(zone => {
               const count = listings.filter(l => getListingZone(listingCoords[l.id])?.id === zone.id).length;
               const isActive = activeZoneId === zone.id;
+              const isDimChip = !!(activeZoneId && !isActive);
               return (
                 <button key={zone.id}
                   onClick={() => {
@@ -662,9 +663,14 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
                     }
                   }}
                   className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-[10px] font-bold shadow-md border transition-all"
-                  style={isActive
-                    ? { background: zone.color, borderColor: zone.color, color: 'white' }
-                    : { background: 'white', borderColor: '#e8e7e3', color: '#1c1c1e' }}>
+                  style={{
+                    ...(isActive
+                      ? { background: zone.color, borderColor: zone.color, color: 'white' }
+                      : { background: 'white', borderColor: '#e8e7e3', color: '#1c1c1e' }),
+                    opacity: isDimChip ? 0.3 : 1,
+                    filter: isDimChip ? 'grayscale(0.7)' : 'none',
+                    transition: 'opacity 0.22s ease, filter 0.22s ease, background 0.18s ease',
+                  }}>
                   <div style={{ width: 7, height: 7, borderRadius: '50%', background: isActive ? 'rgba(255,255,255,0.7)' : zone.color, flexShrink: 0 }} />
                   <span>{zone.name}</span>
                   <span style={{ opacity: isActive ? 0.75 : undefined }} className={isActive ? '' : 'text-[#9ca3af] font-semibold'}>{count}</span>
