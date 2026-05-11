@@ -231,23 +231,26 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
 
     map.addControl(new maplibregl.NavigationControl({ showCompass: true, visualizePitch: true }), 'top-right');
 
+    let moveRafId: number | null = null;
     const movePinsDirect = () => {
-      pinElemsRef.current.forEach((el, id) => {
-        const coords = coordsForPinsRef.current[id];
-        if (!coords) return;
-        const pt = map.project(coords);
-        el.style.left = `${pt.x}px`;
-        el.style.top = `${pt.y}px`;
-      });
-      if (showZonesRef.current) {
-        zoneLabelElemsRef.current.forEach((el, id) => {
-          const zone = campusZones.find(z => z.id === id);
-          if (!zone) return;
-          const pt = map.project(zone.center as maplibregl.LngLatLike);
-          el.style.left = `${pt.x}px`;
-          el.style.top = `${pt.y}px`;
+      if (moveRafId !== null) return; // already scheduled this frame
+      moveRafId = requestAnimationFrame(() => {
+        moveRafId = null;
+        pinElemsRef.current.forEach((el, id) => {
+          const coords = coordsForPinsRef.current[id];
+          if (!coords) return;
+          const pt = map.project(coords);
+          el.style.transform = `translate(calc(${pt.x}px - 50%), calc(${pt.y}px - 100%))`;
         });
-      }
+        if (showZonesRef.current) {
+          zoneLabelElemsRef.current.forEach((el, id) => {
+            const zone = campusZones.find(z => z.id === id);
+            if (!zone) return;
+            const pt = map.project(zone.center as maplibregl.LngLatLike);
+            el.style.transform = `translate(calc(${pt.x}px - 50%), calc(${pt.y}px - 50%))`;
+          });
+        }
+      });
     };
     const updatePinState = () => {
       if (modeRef.current === 'sublease') {
@@ -776,8 +779,9 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
             }}
             style={{
               position: 'absolute', left: 0, top: 0,
-              transform: 'translate(-50%, -50%)',
+              transform: 'translate(-50%, -50%)', // overridden by movePinsDirect via RAF
               pointerEvents: 'auto', zIndex: isActiveZone ? 6 : 4, cursor: 'pointer',
+              willChange: 'transform',
             }}
           >
             {mapZoom < 14.5 ? (
@@ -839,10 +843,11 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
                   }
                 }}
                 style={{
-                  position: 'absolute', left: pos.x, top: pos.y,
-                  transform: `translate(-50%, -100%) ${isSelected ? 'scale(1.12)' : 'scale(1)'}`,
+                  position: 'absolute', left: 0, top: 0,
+                  transform: `translate(calc(${pos.x}px - 50%), calc(${pos.y}px - 100%)) ${isSelected ? 'scale(1.12)' : 'scale(1)'}`,
                   zIndex: isSelected ? 20 : 10, cursor: 'pointer', pointerEvents: 'auto',
                   display: 'flex', flexDirection: 'column', alignItems: 'center', transition: 'transform 0.2s ease',
+                  willChange: 'transform',
                 }}
               >
                 {s.daysUntilLeave <= 7 && !isSelected && (
@@ -901,12 +906,13 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
                   }
                 }}
                 style={{
-                  position: 'absolute', left: pos.x, top: pos.y,
-                  transform: `translate(-50%, -100%) ${isSelected ? 'scale(1.12)' : 'scale(1)'}`,
+                  position: 'absolute', left: 0, top: 0,
+                  transform: `translate(calc(${pos.x}px - 50%), calc(${pos.y}px - 100%)) ${isSelected ? 'scale(1.12)' : 'scale(1)'}`,
                   zIndex: isSelected ? 20 : isDimmed ? 5 : 10, cursor: isDimmed ? 'default' : 'pointer', pointerEvents: 'auto',
                   display: 'flex', flexDirection: 'column', alignItems: 'center', transition: 'transform 0.2s ease, opacity 0.25s ease, filter 0.25s ease',
                   opacity: isDimmed ? 0.18 : 1,
                   filter: isDimmed ? 'grayscale(1) blur(0.6px)' : 'none',
+                  willChange: 'transform',
                 }}
               >
                 {isBestMatch && !isSelected && (
