@@ -196,7 +196,8 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
 
   // Derived early — needed by useEffects below (must be before any useEffect that refs them)
   const activeCollege = profile?.college ?? selectedCollege ?? pickedCollege;
-  const effectiveZoneId = activeZoneId ?? activeCollege?.id ?? null;
+  // effectiveZoneId: ONLY from explicit zone chip clicks — Walk panel uses walk-radius circle, not zone highlight
+  const effectiveZoneId = activeZoneId ?? null;
 
   const rankedListings = profile
     ? [...listings].sort((a, b) => matchScore(b, profile) - matchScore(a, profile))
