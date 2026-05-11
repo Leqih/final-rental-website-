@@ -698,6 +698,8 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
       {/* Zone label DOM overlays — positioned via map.project, updated on every map move */}
       {showZones && campusZones.map(zone => {
         const count = listings.filter(l => getListingZone(listingCoords[l.id])?.id === zone.id).length;
+        const isActiveZone = activeZoneId === zone.id;
+        const isZoneDimmed = !!(activeZoneId && !isActiveZone);
         return (
           <div
             key={zone.id}
@@ -714,7 +716,10 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
             style={{
               position: 'absolute', left: 0, top: 0,
               transform: 'translate(-50%, -50%)',
-              pointerEvents: 'auto', zIndex: 4, cursor: 'pointer',
+              pointerEvents: 'auto', zIndex: isActiveZone ? 6 : 4, cursor: 'pointer',
+              transition: 'opacity 0.25s ease, filter 0.25s ease',
+              opacity: isZoneDimmed ? 0.28 : 1,
+              filter: isZoneDimmed ? 'grayscale(0.8)' : 'none',
             }}
           >
             {mapZoom < 14.5 ? (
@@ -731,19 +736,19 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
               </div>
             ) : (
               <div style={{
-                background: activeZoneId === zone.id ? zone.color : 'white',
-                border: `1px solid ${activeZoneId === zone.id ? zone.color : '#e8e7e3'}`,
+                background: isActiveZone ? zone.color : 'white',
+                border: `1px solid ${isActiveZone ? zone.color : '#e8e7e3'}`,
                 borderRadius: 22,
                 padding: '5px 12px 5px 9px',
                 display: 'flex', alignItems: 'center', gap: 6,
-                boxShadow: activeZoneId === zone.id ? `0 4px 14px ${zone.color}55` : '0 2px 10px rgba(0,0,0,0.12)',
+                boxShadow: isActiveZone ? `0 4px 14px ${zone.color}55` : '0 2px 10px rgba(0,0,0,0.12)',
                 whiteSpace: 'nowrap',
                 transition: 'all 0.2s ease',
               }}>
-                <div style={{ width: 7, height: 7, borderRadius: '50%', background: activeZoneId === zone.id ? 'rgba(255,255,255,0.7)' : zone.color, flexShrink: 0 }} />
-                <span style={{ fontSize: 11, fontWeight: 700, color: activeZoneId === zone.id ? 'white' : '#1c1c1e', letterSpacing: '-0.1px' }}>{zone.name}</span>
+                <div style={{ width: 7, height: 7, borderRadius: '50%', background: isActiveZone ? 'rgba(255,255,255,0.7)' : zone.color, flexShrink: 0 }} />
+                <span style={{ fontSize: 11, fontWeight: 700, color: isActiveZone ? 'white' : '#1c1c1e', letterSpacing: '-0.1px' }}>{zone.name}</span>
                 {count > 0 && (
-                  <span style={{ fontSize: 10, fontWeight: 600, color: activeZoneId === zone.id ? 'rgba(255,255,255,0.7)' : '#9ca3af', marginLeft: 1 }}>{count}</span>
+                  <span style={{ fontSize: 10, fontWeight: 600, color: isActiveZone ? 'rgba(255,255,255,0.7)' : '#9ca3af', marginLeft: 1 }}>{count}</span>
                 )}
               </div>
             )}
@@ -820,12 +825,14 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
             const zoneColor = zone?.color;
             const pinWalkMins = activeCollege ? (listing.walkFrom[activeCollege.id] ?? null) : null;
             const isOutOfRange = !!(activeCollege && pinWalkMins !== null && pinWalkMins > walkTimeMins);
+            const isOutOfZone = !!(activeZoneId && zone?.id !== activeZoneId);
+            const isDimmed = isOutOfRange || isOutOfZone;
             return (
               <div
                 key={listing.id}
                 ref={el => { if (el) pinElemsRef.current.set(listing.id, el); else pinElemsRef.current.delete(listing.id); }}
                 onClick={() => {
-                  if (isOutOfRange) return;
+                  if (isDimmed) return;
                   const next = selectedId === listing.id ? null : listing.id;
                   setSelectedId(next);
                   onPinSelect?.(next);
@@ -837,10 +844,10 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
                 style={{
                   position: 'absolute', left: pos.x, top: pos.y,
                   transform: `translate(-50%, -100%) ${isSelected ? 'scale(1.12)' : 'scale(1)'}`,
-                  zIndex: isSelected ? 20 : isOutOfRange ? 5 : 10, cursor: isOutOfRange ? 'default' : 'pointer', pointerEvents: 'auto',
+                  zIndex: isSelected ? 20 : isDimmed ? 5 : 10, cursor: isDimmed ? 'default' : 'pointer', pointerEvents: 'auto',
                   display: 'flex', flexDirection: 'column', alignItems: 'center', transition: 'transform 0.2s ease, opacity 0.25s ease, filter 0.25s ease',
-                  opacity: isOutOfRange ? 0.22 : 1,
-                  filter: isOutOfRange ? 'grayscale(1) blur(0.5px)' : 'none',
+                  opacity: isDimmed ? 0.18 : 1,
+                  filter: isDimmed ? 'grayscale(1) blur(0.6px)' : 'none',
                 }}
               >
                 {isBestMatch && !isSelected && (
