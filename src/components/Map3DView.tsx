@@ -1039,32 +1039,56 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
         );
       })()}
 
-      {/* Budget quick slider */}
+      {/* Budget + Walk panel */}
       {mode !== 'sublease' && (
-        <div className="absolute left-3 pointer-events-auto" style={{ zIndex: 10, bottom: activeCollege ? 234 : 190 }}>
-          <div className="bg-white/95 backdrop-blur-md rounded-2xl shadow-lg border border-black/8 px-3 py-2.5" style={{ width: 156 }}>
-            <div className="flex items-center justify-between mb-1.5">
-              <span className="text-[9px] font-semibold text-[#9ca3af] uppercase tracking-wider">Budget</span>
-              <span className="text-[11px] font-bold text-[#1c1c1e]">{mapMaxPrice ? `≤ $${mapMaxPrice}` : 'Any'}</span>
-            </div>
-            <input type="range" min={600} max={1400} step={50}
-              value={mapMaxPrice ?? 1400}
-              onChange={e => setMapMaxPrice(+e.target.value === 1400 ? null : +e.target.value)}
-              className="w-full cursor-pointer" style={{ accentColor: '#1c1c1e', height: 4 }} />
-            <div className="flex justify-between mt-1">
-              <span className="text-[8px] text-[#c0bfbb]">$600</span>
-              <span className="text-[8px] text-[#c0bfbb]">Any</span>
-            </div>
-            {/* Walk time row */}
-            <div className="flex items-center justify-between mt-2.5 pt-2.5 border-t border-[#f0efeb]">
-              <div className="flex items-center gap-1.5">
-                <div className="w-2 h-2 rounded-full border-2 border-dashed border-indigo-400 flex-shrink-0" />
-                <span className="text-[9px] font-semibold text-[#9ca3af] uppercase tracking-wider">Walk</span>
+        <div className="absolute left-3 pointer-events-auto" style={{ zIndex: 10, bottom: 190 }}>
+          <div style={{ width: 176, background: 'white', borderRadius: 20, boxShadow: '0 8px 32px rgba(0,0,0,0.13)', border: '1px solid rgba(0,0,0,0.06)', padding: '14px 14px 12px' }}>
+
+            {/* ── Budget ── */}
+            <div style={{ marginBottom: 10 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 7 }}>
+                <span style={{ fontSize: 9, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Budget</span>
+                <span style={{ fontSize: 14, fontWeight: 800, color: '#1c1c1e', letterSpacing: '-0.3px' }}>
+                  {mapMaxPrice ? `≤ $${mapMaxPrice}` : 'Any'}
+                </span>
               </div>
-              <div className="flex items-center gap-0.5">
+              <input type="range" min={600} max={1400} step={50}
+                value={mapMaxPrice ?? 1400}
+                onChange={e => setMapMaxPrice(+e.target.value === 1400 ? null : +e.target.value)}
+                style={{ width: '100%', accentColor: '#1c1c1e', cursor: 'pointer', display: 'block' }} />
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 3 }}>
+                <span style={{ fontSize: 8, color: '#d1d0cc' }}>$600</span>
+                <span style={{ fontSize: 8, color: '#d1d0cc' }}>Any</span>
+              </div>
+            </div>
+
+            {/* ── Divider ── */}
+            <div style={{ height: 1, background: '#f0efeb', margin: '0 -2px 12px' }} />
+
+            {/* ── Walk time segmented control ── */}
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="5" r="1.5"/><path d="M9 19l1-6 2 2 2-6"/><path d="M7 10l2-2 4 1 2-2"/>
+                  </svg>
+                  <span style={{ fontSize: 9, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Walk</span>
+                </div>
+                <span style={{ fontSize: 9, color: activeCollege ? '#6366f1' : '#d1d0cc', fontWeight: 600 }}>
+                  {activeCollege ? activeCollege.short : 'no college'}
+                </span>
+              </div>
+              {/* Segmented pill */}
+              <div style={{ display: 'flex', background: '#f5f4f0', borderRadius: 11, padding: 3, gap: 2 }}>
                 {([5, 10, 15] as const).map(m => (
-                  <button key={m} onClick={() => setWalkTimeMins(m)}
-                    className={`text-[10px] font-bold px-2 py-0.5 rounded-lg transition-all ${walkTimeMins === m ? 'bg-indigo-500 text-white' : 'text-[#6c6a66] hover:text-indigo-500'}`}>
+                  <button key={m} onClick={() => setWalkTimeMins(m)} style={{
+                    flex: 1, padding: '5px 0', borderRadius: 8, border: 'none', cursor: 'pointer',
+                    background: walkTimeMins === m ? 'white' : 'transparent',
+                    boxShadow: walkTimeMins === m ? '0 1px 4px rgba(0,0,0,0.12)' : 'none',
+                    fontSize: 11, fontWeight: 700,
+                    color: walkTimeMins === m ? '#1c1c1e' : '#9ca3af',
+                    transition: 'all 0.15s ease',
+                  }}>
                     {m}m
                   </button>
                 ))}
@@ -1073,8 +1097,6 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
           </div>
         </div>
       )}
-
-      {/* Walk time toggle — always visible, integrated into budget panel */}
 
       {/* Bottom card strip */}
       {mode === 'sublease' ? (
