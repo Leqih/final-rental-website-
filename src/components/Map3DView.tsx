@@ -504,7 +504,8 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
   const typeFilteredListings = listings.filter(l => {
     if (filteredIds && !filteredIds.includes(l.id)) return false;
     if (mapMaxPrice !== null && l.price > mapMaxPrice) return false;
-    if (activeCollege && (l.walkFrom[activeCollege.id] ?? 99) > walkTimeMins) return false;
+    // Walk panel: filter by zone (show listings in that college's district)
+    if (activeCollege && getListingZone(listingCoords[l.id])?.id !== activeCollege.id) return false;
     if (mapTypeFilter === 'studio') return l.beds.toLowerCase().includes('studio')
     if (mapTypeFilter === '1br') return l.beds.startsWith('1B')
     if (mapTypeFilter === '2br+') return !l.beds.toLowerCase().includes('studio') && !l.beds.startsWith('1B')
@@ -833,9 +834,8 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
             const zone = showZones ? getListingZone(listingCoords[listing.id]) : null;
             const zoneColor = zone?.color;
             const pinWalkMins = activeCollege ? (listing.walkFrom[activeCollege.id] ?? null) : null;
-            // Walk-panel: dim by walk range; zone-chip click: dim by zone boundary
-            // (don't combine — effectiveZoneId from walk pick would dim by zone instead of range)
-            const isOutOfRange = !!(activeCollege && (listing.walkFrom[activeCollege.id] ?? 99) > walkTimeMins);
+            // Walk-panel: dim pins outside that college's zone; zone-chip: dim by zone boundary
+            const isOutOfRange = !!(activeCollege && getListingZone(listingCoords[listing.id])?.id !== activeCollege.id);
             const isOutOfZone = !!(activeZoneId && zone?.id !== activeZoneId);
             const isDimmed = isOutOfRange || isOutOfZone;
             return (
@@ -1105,30 +1105,16 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
               </div>
 
               {activeCollege ? (
-                /* Walk time segmented control */
+                /* Zone-based filter — show listings in that college's district */
                 <>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8, padding: '5px 8px', background: '#f5f4f0', borderRadius: 10 }}>
                     <span style={{ fontSize: 13 }}>{activeCollege.emoji}</span>
                     <span style={{ fontSize: 11, fontWeight: 700, color: '#1c1c1e' }}>{activeCollege.short}</span>
                     <span style={{ fontSize: 10, color: '#9ca3af', marginLeft: 'auto' }}>{typeFilteredListings.length} found</span>
                   </div>
-                  <p style={{ fontSize: 9, color: '#9ca3af', marginBottom: 8, lineHeight: 1.4 }}>
-                    只显示步行范围内的房源
+                  <p style={{ fontSize: 9, color: '#9ca3af', lineHeight: 1.4 }}>
+                    显示 {activeCollege.name} 学区内的房源
                   </p>
-                  <div style={{ display: 'flex', background: '#f5f4f0', borderRadius: 11, padding: 3, gap: 2 }}>
-                    {([5, 10, 15] as const).map(m => (
-                      <button key={m} onClick={() => setWalkTimeMins(m)} style={{
-                        flex: 1, padding: '5px 0', borderRadius: 8, border: 'none', cursor: 'pointer',
-                        background: walkTimeMins === m ? 'white' : 'transparent',
-                        boxShadow: walkTimeMins === m ? '0 1px 4px rgba(0,0,0,0.12)' : 'none',
-                        fontSize: 11, fontWeight: 700,
-                        color: walkTimeMins === m ? '#1c1c1e' : '#9ca3af',
-                        transition: 'all 0.15s ease',
-                      }}>
-                        {m}m
-                      </button>
-                    ))}
-                  </div>
                 </>
               ) : (
                 /* College picker grid */
