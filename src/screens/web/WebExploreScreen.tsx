@@ -187,10 +187,18 @@ const fmtDate = (d: string) => {
 const discountPct = (price: number, market: number) => Math.round((1 - price / market) * 100)
 
 const subleaseTypeOptions = [
-  { id: 'all' as const,       label: 'All',        icon: '🏘️', desc: 'All types' },
-  { id: 'sublease' as const,  label: 'Sublet',     icon: '🔄', desc: 'Temp — owner returns' },
-  { id: 'transfer' as const,  label: 'Transfer',   icon: '📋', desc: 'Take over lease' },
-  { id: 'roomshare' as const, label: 'Room Share', icon: '🏠', desc: 'Split with roommate' },
+  { id: 'all' as const,       label: 'All',        desc: 'All types', icon: (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+  )},
+  { id: 'sublease' as const,  label: 'Sublet',     desc: 'Temp — owner returns', icon: (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M1 4v6h6"/><path d="M23 20v-6h-6"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>
+  )},
+  { id: 'transfer' as const,  label: 'Transfer',   desc: 'Take over lease', icon: (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="14" x2="16" y2="14"/><polyline points="13 11 16 14 13 17"/></svg>
+  )},
+  { id: 'roomshare' as const, label: 'Room Share', desc: 'Split with roommate', icon: (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+  )},
 ]
 
 export default function WebExploreScreen({ onViewListing: _onViewListing, onNavigate, initialListingId, initialSubleaseId, savedIds, onToggleSave }: Props) {
@@ -731,7 +739,7 @@ export default function WebExploreScreen({ onViewListing: _onViewListing, onNavi
                         <button key={t.id} onClick={() => setSubleaseType(t.id)}
                           className={`flex flex-col items-start gap-2 px-3 py-3 rounded-xl border-2 transition-all text-left ${isActive ? 'border-[#1c1c1e] bg-[#f5f4f0] text-[#1c1c1e]' : 'border-[#e8e7e3] text-[#6c6a66] hover:border-[#c0bfbb] hover:text-[#1c1c1e]'}`}
                         >
-                          <span className="text-[18px] leading-none">{t.icon}</span>
+                          {t.icon}
                           <div>
                             <span className="text-[12px] font-semibold leading-none block">{t.label}</span>
                             <span className="text-[10px] text-[#9ca3af] leading-tight block mt-0.5">{t.desc} · {count}</span>
