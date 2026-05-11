@@ -400,11 +400,14 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
     }, 300);
   }, [profile, mapLoaded]);
 
-  // Toggle campus district zones — hide fills when walk college is active (reduce clutter)
+  // effectiveZoneId: zone chip click OR walk-panel college pick both dim other zones
+  const effectiveZoneId = activeZoneId ?? activeCollege?.id ?? null;
+
+  // Toggle campus district zones visibility + position labels
   useEffect(() => {
     if (!mapLoaded || !mapRef.current) return;
     const map = mapRef.current;
-    const vis = (showZones && !activeCollege) ? 'visible' : 'none';
+    const vis = showZones ? 'visible' : 'none';
     if (map.getLayer('campus-zones-glow')) map.setLayoutProperty('campus-zones-glow', 'visibility', vis);
     if (map.getLayer('campus-zones-fill')) map.setLayoutProperty('campus-zones-fill', 'visibility', vis);
     if (map.getLayer('campus-zones-line')) map.setLayoutProperty('campus-zones-line', 'visibility', vis);
@@ -420,14 +423,14 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
     }
   }, [showZones, mapLoaded]);
 
-  // Dim non-active zones using data-driven paint expressions
+  // Dim non-active zones using data-driven paint expressions (reacts to both zone click & walk college pick)
   useEffect(() => {
     if (!mapLoaded || !mapRef.current || !showZones) return;
     const map = mapRef.current;
-    if (activeZoneId) {
-      const fillExpr = ['case', ['==', ['get', 'zoneId'], activeZoneId], 0.18, 0.04] as unknown as number;
-      const lineExpr = ['case', ['==', ['get', 'zoneId'], activeZoneId], 0.90, 0.12] as unknown as number;
-      const glowExpr = ['case', ['==', ['get', 'zoneId'], activeZoneId], 0.22, 0.04] as unknown as number;
+    if (effectiveZoneId) {
+      const fillExpr = ['case', ['==', ['get', 'zoneId'], effectiveZoneId], 0.18, 0.04] as unknown as number;
+      const lineExpr = ['case', ['==', ['get', 'zoneId'], effectiveZoneId], 0.90, 0.12] as unknown as number;
+      const glowExpr = ['case', ['==', ['get', 'zoneId'], effectiveZoneId], 0.22, 0.04] as unknown as number;
       if (map.getLayer('campus-zones-fill')) map.setPaintProperty('campus-zones-fill', 'fill-opacity', fillExpr);
       if (map.getLayer('campus-zones-line')) map.setPaintProperty('campus-zones-line', 'line-opacity', lineExpr);
       if (map.getLayer('campus-zones-glow')) map.setPaintProperty('campus-zones-glow', 'line-opacity', glowExpr);
@@ -436,7 +439,7 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
       if (map.getLayer('campus-zones-line')) map.setPaintProperty('campus-zones-line', 'line-opacity', 0.90);
       if (map.getLayer('campus-zones-glow')) map.setPaintProperty('campus-zones-glow', 'line-opacity', 0.20);
     }
-  }, [activeZoneId, showZones, mapLoaded]);
+  }, [effectiveZoneId, showZones, mapLoaded]);
 
   // Recompute pins when mode or subleasePins change
   useEffect(() => {
@@ -649,8 +652,8 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
           <div className="flex gap-1.5 flex-wrap">
             {campusZones.map(zone => {
               const count = listings.filter(l => getListingZone(listingCoords[l.id])?.id === zone.id).length;
-              const isActive = activeZoneId === zone.id;
-              const isDimChip = !!(activeZoneId && !isActive);
+              const isActive = effectiveZoneId === zone.id;
+              const isDimChip = !!(effectiveZoneId && !isActive);
               return (
                 <button key={zone.id}
                   onClick={() => {
@@ -704,8 +707,8 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
       {/* Zone label DOM overlays — positioned via map.project, updated on every map move */}
       {showZones && campusZones.map(zone => {
         const count = listings.filter(l => getListingZone(listingCoords[l.id])?.id === zone.id).length;
-        const isActiveZone = activeZoneId === zone.id;
-        const isZoneDimmed = !!(activeZoneId && !isActiveZone);
+        const isActiveZone = effectiveZoneId === zone.id;
+        const isZoneDimmed = !!(effectiveZoneId && !isActiveZone);
         return (
           <div
             key={zone.id}
@@ -831,7 +834,7 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
             const zoneColor = zone?.color;
             const pinWalkMins = activeCollege ? (listing.walkFrom[activeCollege.id] ?? null) : null;
             const isOutOfRange = !!(activeCollege && pinWalkMins !== null && pinWalkMins > walkTimeMins);
-            const isOutOfZone = !!(activeZoneId && zone?.id !== activeZoneId);
+            const isOutOfZone = !!(effectiveZoneId && zone?.id !== effectiveZoneId);
             const isDimmed = isOutOfRange || isOutOfZone;
             return (
               <div
