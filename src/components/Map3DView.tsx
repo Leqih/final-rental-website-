@@ -307,7 +307,7 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
         },
       });
 
-      // Click fill area to activate zone
+      // Click fill area to activate zone — also syncs Walk panel
       map.on('click', 'campus-zones-fill', (e) => {
         if (!showZonesRef.current) return;
         const zoneId = e.features?.[0]?.properties?.zoneId as string | undefined;
@@ -316,6 +316,7 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
         if (!zone) return;
         const next = activeZoneIdRef.current === zoneId ? null : zoneId;
         setActiveZoneId(next);
+        setPickedCollege(next ? (colleges.find(c => c.id === next) ?? null) : null);
         if (next) {
           map.flyTo({ center: zone.center, zoom: 15.8, pitch: 52, bearing: -20, duration: 700, essential: true });
         } else {
@@ -660,6 +661,7 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
                   onClick={() => {
                     const next = isActive ? null : zone.id;
                     setActiveZoneId(next);
+                    setPickedCollege(next ? (colleges.find(c => c.id === next) ?? null) : null);
                     if (next && mapRef.current) {
                       mapRef.current.flyTo({ center: zone.center, zoom: 15.8, pitch: 52, bearing: -20, duration: 700, essential: true });
                     } else if (!next && mapRef.current) {
@@ -717,6 +719,7 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
             onClick={() => {
               const next = activeZoneId === zone.id ? null : zone.id;
               setActiveZoneId(next);
+              setPickedCollege(next ? (colleges.find(c => c.id === next) ?? null) : null);
               if (next && mapRef.current) {
                 mapRef.current.flyTo({ center: zone.center, zoom: 15.8, pitch: 52, bearing: -20, duration: 700, essential: true });
               } else if (!next && mapRef.current) {
@@ -1100,7 +1103,7 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
                   <span style={{ fontSize: 9, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Walk from</span>
                 </div>
                 {activeCollege && (
-                  <button onClick={() => setPickedCollege(null)} style={{ fontSize: 9, color: '#9ca3af', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>✕</button>
+                  <button onClick={() => { setPickedCollege(null); setActiveZoneId(null); }} style={{ fontSize: 9, color: '#9ca3af', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>✕</button>
                 )}
               </div>
 
@@ -1122,6 +1125,7 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
                   {colleges.map(c => (
                     <button key={c.id} onClick={() => {
                       setPickedCollege(c);
+                      setActiveZoneId(c.id);
                       mapRef.current?.flyTo({ center: c.coords, zoom: 15.5, pitch: 52, bearing: -20, duration: 700, essential: true });
                     }} style={{
                       display: 'flex', alignItems: 'center', gap: 5,
