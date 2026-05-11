@@ -1055,24 +1055,26 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
               <span className="text-[8px] text-[#c0bfbb]">$600</span>
               <span className="text-[8px] text-[#c0bfbb]">Any</span>
             </div>
+            {/* Walk time row */}
+            <div className="flex items-center justify-between mt-2.5 pt-2.5 border-t border-[#f0efeb]">
+              <div className="flex items-center gap-1.5">
+                <div className="w-2 h-2 rounded-full border-2 border-dashed border-indigo-400 flex-shrink-0" />
+                <span className="text-[9px] font-semibold text-[#9ca3af] uppercase tracking-wider">Walk</span>
+              </div>
+              <div className="flex items-center gap-0.5">
+                {([5, 10, 15] as const).map(m => (
+                  <button key={m} onClick={() => setWalkTimeMins(m)}
+                    className={`text-[10px] font-bold px-2 py-0.5 rounded-lg transition-all ${walkTimeMins === m ? 'bg-indigo-500 text-white' : 'text-[#6c6a66] hover:text-indigo-500'}`}>
+                    {m}m
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       )}
 
-      {/* Walk radius legend + time toggle */}
-      {activeCollege && (
-        <div className="absolute bottom-[190px] left-3 pointer-events-auto" style={{ zIndex: 10 }}>
-          <div className="bg-white/90 backdrop-blur-md px-2 py-1.5 rounded-xl shadow-md border border-black/8 flex items-center gap-1.5">
-            <div className="w-2.5 h-2.5 rounded-full border-2 border-dashed border-indigo-500 bg-indigo-50 flex-shrink-0" />
-            {([5, 10, 15] as const).map(m => (
-              <button key={m} onClick={() => setWalkTimeMins(m)}
-                className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md transition-all ${walkTimeMins === m ? 'bg-indigo-500 text-white' : 'text-[#6c6a66] hover:text-indigo-500'}`}>
-                {m}m
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
+      {/* Walk time toggle — always visible, integrated into budget panel */}
 
       {/* Bottom card strip */}
       {mode === 'sublease' ? (
