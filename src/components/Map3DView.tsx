@@ -185,6 +185,7 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
   const showZonesRef = useRef(false);
   showZonesRef.current = showZones;
   const zoneLabelElemsRef = useRef<Map<string, HTMLDivElement>>(new Map());
+  const [activeZoneId, setActiveZoneId] = useState<string | null>(null);
 
   const rankedListings = profile
     ? [...listings].sort((a, b) => matchScore(b, profile) - matchScore(a, profile))
@@ -431,6 +432,7 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
 
   const typeFilteredListings = listings.filter(l => {
     if (filteredIds && !filteredIds.includes(l.id)) return false;
+    if (activeZoneId && getListingZone(listingCoords[l.id])?.id !== activeZoneId) return false;
     if (mapTypeFilter === 'studio') return l.beds.toLowerCase().includes('studio')
     if (mapTypeFilter === '1br') return l.beds.startsWith('1B')
     if (mapTypeFilter === '2br+') return !l.beds.toLowerCase().includes('studio') && !l.beds.startsWith('1B')
@@ -578,14 +580,24 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
           <div className="flex gap-1.5 flex-wrap">
             {campusZones.map(zone => {
               const count = listings.filter(l => getListingZone(listingCoords[l.id])?.id === zone.id).length;
+              const isActive = activeZoneId === zone.id;
               return (
-                <div key={zone.id}
-                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-[10px] font-bold shadow-md border bg-white"
-                  style={{ borderColor: '#e8e7e3', color: '#1c1c1e' }}>
-                  <div style={{ width: 7, height: 7, borderRadius: '50%', background: zone.color, flexShrink: 0 }} />
+                <button key={zone.id}
+                  onClick={() => {
+                    const next = isActive ? null : zone.id;
+                    setActiveZoneId(next);
+                    if (next && mapRef.current) {
+                      mapRef.current.flyTo({ center: zone.center, zoom: 15.8, pitch: 52, bearing: -20, duration: 700, essential: true });
+                    }
+                  }}
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-[10px] font-bold shadow-md border transition-all"
+                  style={isActive
+                    ? { background: zone.color, borderColor: zone.color, color: 'white' }
+                    : { background: 'white', borderColor: '#e8e7e3', color: '#1c1c1e' }}>
+                  <div style={{ width: 7, height: 7, borderRadius: '50%', background: isActive ? 'rgba(255,255,255,0.7)' : zone.color, flexShrink: 0 }} />
                   <span>{zone.name}</span>
-                  {count > 0 && <span className="text-[#9ca3af] font-semibold">{count}</span>}
-                </div>
+                  <span style={{ opacity: isActive ? 0.75 : undefined }} className={isActive ? '' : 'text-[#9ca3af] font-semibold'}>{count}</span>
+                </button>
               );
             })}
           </div>
@@ -702,7 +714,8 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
           pinPositions.map(pos => {
             const listing = listings.find(l => l.id === pos.id);
             if (!listing) return null;
-            if (!typeFilteredListings.some(t => t.id === listing.id)) return null;
+            const inZone = !activeZoneId || getListingZone(listingCoords[listing.id])?.id === activeZoneId;
+            if (filteredIds && !filteredIds.includes(listing.id)) return null;
             const isSelected = selectedId === listing.id;
             const score = profile ? scores[listing.id] : 0;
             const hasProfile = !!profile;
@@ -727,7 +740,8 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
                   position: 'absolute', left: pos.x, top: pos.y,
                   transform: `translate(-50%, -100%) ${isSelected ? 'scale(1.12)' : 'scale(1)'}`,
                   zIndex: isSelected ? 20 : 10, cursor: 'pointer', pointerEvents: 'auto',
-                  display: 'flex', flexDirection: 'column', alignItems: 'center', transition: 'transform 0.2s ease',
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', transition: 'transform 0.2s ease, opacity 0.2s ease',
+                  opacity: inZone ? 1 : 0.25,
                 }}
               >
                 {isBestMatch && !isSelected && (
