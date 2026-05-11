@@ -665,7 +665,6 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
             {campusZones.map(zone => {
               const count = listings.filter(l => getListingZone(listingCoords[l.id])?.id === zone.id).length;
               const isActive = effectiveZoneId === zone.id;
-              const isDimChip = !!(effectiveZoneId && !isActive);
               return (
                 <button key={zone.id}
                   onClick={() => {
@@ -683,9 +682,7 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
                     ...(isActive
                       ? { background: zone.color, borderColor: zone.color, color: 'white' }
                       : { background: 'white', borderColor: '#e8e7e3', color: '#1c1c1e' }),
-                    opacity: isDimChip ? 0.3 : 1,
-                    filter: isDimChip ? 'grayscale(0.7)' : 'none',
-                    transition: 'opacity 0.22s ease, filter 0.22s ease, background 0.18s ease',
+                    transition: 'background 0.18s ease, border-color 0.18s ease',
                   }}>
                   <div style={{ width: 7, height: 7, borderRadius: '50%', background: isActive ? 'rgba(255,255,255,0.7)' : zone.color, flexShrink: 0 }} />
                   <span>{zone.name}</span>
@@ -740,9 +737,6 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
               position: 'absolute', left: 0, top: 0,
               transform: 'translate(-50%, -50%)',
               pointerEvents: 'auto', zIndex: isActiveZone ? 6 : 4, cursor: 'pointer',
-              transition: 'opacity 0.25s ease, filter 0.25s ease',
-              opacity: isZoneDimmed ? 0.28 : 1,
-              filter: isZoneDimmed ? 'grayscale(0.8)' : 'none',
             }}
           >
             {mapZoom < 14.5 ? (
