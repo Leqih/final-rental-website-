@@ -342,15 +342,37 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
 
     buildingMarkerRef.current?.remove();
     if (college) {
+      // Inject pulse keyframes once
+      if (!document.getElementById('college-pulse-style')) {
+        const style = document.createElement('style');
+        style.id = 'college-pulse-style';
+        style.textContent = `
+          @keyframes collegePulse {
+            0%   { transform: translate(-50%,-50%) scale(1);   opacity: 0.6; }
+            70%  { transform: translate(-50%,-50%) scale(2.8); opacity: 0; }
+            100% { transform: translate(-50%,-50%) scale(2.8); opacity: 0; }
+          }
+          @keyframes collegePulse2 {
+            0%   { transform: translate(-50%,-50%) scale(1);   opacity: 0.4; }
+            70%  { transform: translate(-50%,-50%) scale(2.0); opacity: 0; }
+            100% { transform: translate(-50%,-50%) scale(2.0); opacity: 0; }
+          }
+        `;
+        document.head.appendChild(style);
+      }
       const el = document.createElement('div');
       el.style.cssText = `display:flex;flex-direction:column;align-items:center;pointer-events:none;`;
       el.innerHTML = `
-        <div style="background:#4f46e5;color:white;font-size:11px;font-weight:800;padding:5px 10px;border-radius:20px;white-space:nowrap;box-shadow:0 4px 16px rgba(79,70,229,0.4);display:flex;align-items:center;gap:5px;">
-          <span style="font-size:14px">${college.emoji}</span>
-          ${college.short} · 10 min walk
+        <div style="background:#4f46e5;color:white;font-size:12px;font-weight:800;padding:6px 13px;border-radius:22px;white-space:nowrap;box-shadow:0 4px 20px rgba(79,70,229,0.55);display:flex;align-items:center;gap:6px;">
+          <span style="font-size:15px">${college.emoji}</span>
+          ${college.short} · ${walkTimeMins}m walk
         </div>
-        <div style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:7px solid #4f46e5;margin-top:-1px;"></div>
-        <div style="width:10px;height:10px;background:#4f46e5;border-radius:50%;border:2px solid white;box-shadow:0 0 0 3px rgba(79,70,229,0.3);margin-top:2px;"></div>
+        <div style="width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-top:8px solid #4f46e5;margin-top:-1px;"></div>
+        <div style="position:relative;width:14px;height:14px;margin-top:2px;">
+          <div style="position:absolute;width:14px;height:14px;background:#4f46e5;border-radius:50%;border:2.5px solid white;box-shadow:0 0 0 3px rgba(79,70,229,0.35);top:0;left:0;"></div>
+          <div style="position:absolute;width:14px;height:14px;background:rgba(79,70,229,0.5);border-radius:50%;top:0;left:50%;animation:collegePulse 1.8s ease-out infinite;"></div>
+          <div style="position:absolute;width:14px;height:14px;background:rgba(79,70,229,0.35);border-radius:50%;top:0;left:50%;animation:collegePulse2 1.8s ease-out 0.4s infinite;"></div>
+        </div>
       `;
       buildingMarkerRef.current = new maplibregl.Marker({ element: el, anchor: 'bottom' })
         .setLngLat(college.coords)
@@ -378,11 +400,11 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
     }, 300);
   }, [profile, mapLoaded]);
 
-  // Toggle campus district zones
+  // Toggle campus district zones — hide fills when walk college is active (reduce clutter)
   useEffect(() => {
     if (!mapLoaded || !mapRef.current) return;
     const map = mapRef.current;
-    const vis = showZones ? 'visible' : 'none';
+    const vis = (showZones && !activeCollege) ? 'visible' : 'none';
     if (map.getLayer('campus-zones-glow')) map.setLayoutProperty('campus-zones-glow', 'visibility', vis);
     if (map.getLayer('campus-zones-fill')) map.setLayoutProperty('campus-zones-fill', 'visibility', vis);
     if (map.getLayer('campus-zones-line')) map.setLayoutProperty('campus-zones-line', 'visibility', vis);
@@ -825,12 +847,6 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
                   <span style={{ fontSize: 9, background: '#ef4444', color: 'white', fontWeight: 800, padding: '2px 8px', borderRadius: 20, marginBottom: 4, whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 3 }}>
                     <svg width="9" height="9" viewBox="0 0 24 24" fill="white" stroke="white" strokeWidth="1"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
                     Saved
-                  </span>
-                )}
-                {pinWalkMins != null && !isSelected && (
-                  <span style={{ fontSize: 9, background: '#6366f1', color: 'white', fontWeight: 800, padding: '2px 8px', borderRadius: 20, marginBottom: 4, whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 3 }}>
-                    <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="5" r="1.5"/><path d="M9 19l1-6 2 2 2-6"/><path d="M7 10l2-2 4 1 2-2"/></svg>
-                    {pinWalkMins}m
                   </span>
                 )}
                 <div style={{
