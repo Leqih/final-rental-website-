@@ -194,6 +194,10 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
   const [walkTimeMins, setWalkTimeMins] = useState<5 | 10 | 15>(10);
   const [pickedCollege, setPickedCollege] = useState<College | null>(null);
 
+  // Derived early — needed by useEffects below (must be before any useEffect that refs them)
+  const activeCollege = profile?.college ?? selectedCollege ?? pickedCollege;
+  const effectiveZoneId = activeZoneId ?? activeCollege?.id ?? null;
+
   const rankedListings = profile
     ? [...listings].sort((a, b) => matchScore(b, profile) - matchScore(a, profile))
     : listings;
@@ -495,10 +499,6 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
     if (!coords || !mapRef.current) return;
     mapRef.current.flyTo({ center: coords, zoom: 17, pitch: 65, bearing: 30, duration: 900, essential: true });
   }, []);
-
-  const activeCollege = profile?.college ?? selectedCollege ?? pickedCollege;
-  // effectiveZoneId: zone chip click OR walk-panel college pick both dim other zones
-  const effectiveZoneId = activeZoneId ?? activeCollege?.id ?? null;
 
   const typeFilteredListings = listings.filter(l => {
     if (filteredIds && !filteredIds.includes(l.id)) return false;
