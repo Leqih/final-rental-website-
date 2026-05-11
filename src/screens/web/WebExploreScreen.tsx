@@ -761,12 +761,12 @@ export default function WebExploreScreen({ onViewListing: _onViewListing, onNavi
                   <div className="flex gap-2">
                     <label className="flex-1 border border-[#e8e7e3] rounded-2xl px-3 py-2.5 cursor-text focus-within:border-[#1c1c1e] transition-colors">
                       <p className="text-[10px] text-[#9ca3af] font-semibold uppercase tracking-wider leading-none mb-1">Move-in</p>
-                      <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)}
+                      <input type="date" lang="en" value={dateFrom} onChange={e => setDateFrom(e.target.value)}
                         className="w-full text-[13px] font-bold text-[#1c1c1e] bg-transparent outline-none leading-none" />
                     </label>
                     <label className="flex-1 border border-[#e8e7e3] rounded-2xl px-3 py-2.5 cursor-text focus-within:border-[#1c1c1e] transition-colors">
                       <p className="text-[10px] text-[#9ca3af] font-semibold uppercase tracking-wider leading-none mb-1">Move-out</p>
-                      <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)}
+                      <input type="date" lang="en" value={dateTo} onChange={e => setDateTo(e.target.value)}
                         className="w-full text-[13px] font-bold text-[#1c1c1e] bg-transparent outline-none leading-none" />
                     </label>
                   </div>
