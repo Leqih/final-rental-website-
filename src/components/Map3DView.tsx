@@ -296,6 +296,9 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
   modeRef.current = mode;
   subleasePinsRef.current = subleasePins;
   const [showZones, setShowZones] = useState(false);
+  const showZonesRef = useRef(false);
+  showZonesRef.current = showZones;
+  const zoneLabelElemsRef = useRef<Map<string, HTMLDivElement>>(new Map());
 
   const rankedListings = profile
     ? [...listings].sort((a, b) => matchScore(b, profile) - matchScore(a, profile))
@@ -326,6 +329,15 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
         el.style.left = `${pt.x}px`;
         el.style.top = `${pt.y}px`;
       });
+      if (showZonesRef.current) {
+        zoneLabelElemsRef.current.forEach((el, id) => {
+          const zone = campusZones.find(z => z.id === id);
+          if (!zone) return;
+          const pt = map.project(zone.center as maplibregl.LngLatLike);
+          el.style.left = `${pt.x}px`;
+          el.style.top = `${pt.y}px`;
+        });
+      }
     };
     const updatePinState = () => {
       if (modeRef.current === 'sublease') {
@@ -369,50 +381,30 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
           })),
         },
       });
+      // Glow halo — wide blurred line underneath for premium feel
+      map.addLayer({
+        id: 'campus-zones-glow', type: 'line', source: 'campus-zones',
+        layout: { visibility: 'none' },
+        paint: {
+          'line-color': ['get', 'color'] as unknown as string,
+          'line-width': 14,
+          'line-opacity': 0.20,
+          'line-blur': 10,
+        },
+      });
       map.addLayer({
         id: 'campus-zones-fill', type: 'fill', source: 'campus-zones',
         layout: { visibility: 'none' },
-        paint: { 'fill-color': ['get', 'color'] as unknown as string, 'fill-opacity': 0.18 },
+        paint: { 'fill-color': ['get', 'color'] as unknown as string, 'fill-opacity': 0.13 },
       });
       map.addLayer({
         id: 'campus-zones-line', type: 'line', source: 'campus-zones',
         layout: { visibility: 'none' },
         paint: {
           'line-color': ['get', 'color'] as unknown as string,
-          'line-width': 2.5,
-          'line-opacity': 0.85,
-          'line-blur': 1.2,
-        },
-      });
-      // Zone labels as a symbol layer (GPU-rendered, no JS per-frame cost)
-      map.addSource('campus-zone-labels', {
-        type: 'geojson',
-        data: {
-          type: 'FeatureCollection',
-          features: campusZones.map(z => ({
-            type: 'Feature' as const,
-            properties: { label: z.name, color: z.color },
-            geometry: { type: 'Point' as const, coordinates: z.center },
-          })),
-        },
-      });
-      map.addLayer({
-        id: 'campus-zone-labels', type: 'symbol', source: 'campus-zone-labels',
-        layout: {
-          visibility: 'none',
-          'text-field': ['get', 'label'] as unknown as string,
-          'text-font': ['Noto Sans Bold', 'Arial Unicode MS Bold'],
-          'text-size': 14,
-          'text-anchor': 'center',
-          'text-allow-overlap': true,
-          'text-ignore-placement': true,
-          'text-letter-spacing': 0.05,
-        },
-        paint: {
-          'text-color': ['get', 'color'] as unknown as string,
-          'text-halo-color': 'white',
-          'text-halo-width': 2.5,
-          'text-halo-blur': 0.5,
+          'line-width': 2,
+          'line-opacity': 0.90,
+          'line-blur': 0.4,
         },
       });
     });
@@ -478,9 +470,19 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
     if (!mapLoaded || !mapRef.current) return;
     const map = mapRef.current;
     const vis = showZones ? 'visible' : 'none';
+    if (map.getLayer('campus-zones-glow')) map.setLayoutProperty('campus-zones-glow', 'visibility', vis);
     if (map.getLayer('campus-zones-fill')) map.setLayoutProperty('campus-zones-fill', 'visibility', vis);
     if (map.getLayer('campus-zones-line')) map.setLayoutProperty('campus-zones-line', 'visibility', vis);
-    if (map.getLayer('campus-zone-labels')) map.setLayoutProperty('campus-zone-labels', 'visibility', vis);
+    // Position zone label DOM elements when zones become visible
+    if (showZones) {
+      campusZones.forEach(zone => {
+        const el = zoneLabelElemsRef.current.get(zone.id);
+        if (!el) return;
+        const pt = map.project(zone.center as maplibregl.LngLatLike);
+        el.style.left = `${pt.x}px`;
+        el.style.top = `${pt.y}px`;
+      });
+    }
   }, [showZones, mapLoaded]);
 
   // Recompute pins when mode or subleasePins change
@@ -685,6 +687,24 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
           </button>
         </div>
 
+        {/* Zone legend chips — visible when Districts is on */}
+        {showZones && (
+          <div className="flex gap-1.5 flex-wrap">
+            {campusZones.map(zone => {
+              const count = listings.filter(l => getListingZone(listingCoords[l.id])?.id === zone.id).length;
+              return (
+                <div key={zone.id}
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-[10px] font-bold shadow-md border backdrop-blur-md"
+                  style={{ background: zone.color + '18', borderColor: zone.color + '50', color: zone.color }}>
+                  <div style={{ width: 6, height: 6, borderRadius: '50%', background: zone.color, flexShrink: 0 }} />
+                  <span>{zone.name}</span>
+                  {count > 0 && <span style={{ opacity: 0.65 }}>{count}</span>}
+                </div>
+              );
+            })}
+          </div>
+        )}
+
         {/* Type icon buttons — hidden in sublease mode */}
         <div className={`flex gap-2 ${mode === 'sublease' ? 'hidden' : ''}`}>
           {([
@@ -705,6 +725,40 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
           ))}
         </div>
       </div>
+
+      {/* Zone label DOM overlays — positioned via map.project, updated on every map move */}
+      {showZones && campusZones.map(zone => {
+        const count = listings.filter(l => getListingZone(listingCoords[l.id])?.id === zone.id).length;
+        return (
+          <div
+            key={zone.id}
+            ref={el => { if (el) zoneLabelElemsRef.current.set(zone.id, el); else zoneLabelElemsRef.current.delete(zone.id); }}
+            style={{
+              position: 'absolute', left: 0, top: 0,
+              transform: 'translate(-50%, -50%)',
+              pointerEvents: 'none', zIndex: 4,
+            }}
+          >
+            <div style={{
+              background: `${zone.color}1a`,
+              backdropFilter: 'blur(10px)',
+              WebkitBackdropFilter: 'blur(10px)',
+              border: `1.5px solid ${zone.color}60`,
+              borderRadius: 22,
+              padding: '5px 12px 5px 9px',
+              display: 'flex', alignItems: 'center', gap: 6,
+              boxShadow: `0 2px 12px ${zone.color}30`,
+              whiteSpace: 'nowrap',
+            }}>
+              <div style={{ width: 7, height: 7, borderRadius: '50%', background: zone.color, flexShrink: 0, boxShadow: `0 0 6px ${zone.color}` }} />
+              <span style={{ fontSize: 11, fontWeight: 800, color: zone.color, letterSpacing: '-0.1px' }}>{zone.name}</span>
+              {count > 0 && (
+                <span style={{ fontSize: 10, fontWeight: 700, color: zone.color, opacity: 0.65, marginLeft: 1 }}>{count}</span>
+              )}
+            </div>
+          </div>
+        );
+      })}
 
       {/* Pin overlay */}
       <div className="absolute inset-0 pointer-events-none" style={{ zIndex: 5 }}>
