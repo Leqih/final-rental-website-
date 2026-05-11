@@ -759,28 +759,30 @@ export default function WebExploreScreen({ onViewListing: _onViewListing, onNavi
                     )}
                   </div>
                   <div className="flex gap-2">
-                    {([
+                    {[
                       { label: 'Move-in',  val: dateFrom, set: setDateFrom },
                       { label: 'Move-out', val: dateTo,   set: setDateTo  },
-                    ] as const).map(({ label, val, set }) => {
-                      const display = val
-                        ? (() => { const [y,m,d] = val.split('-'); return `${m}/${d}/${y}` })()
-                        : ''
+                    ].map(({ label, val, set }) => {
+                      const [selYear, selMonth] = val ? val.split('-') : ['', '']
+                      const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+                      const update = (y: string, m: string) => { if (y && m) set(`${y}-${m}-01`); else set('') }
                       return (
-                        <label key={label} className="flex-1 border border-[#e8e7e3] rounded-2xl px-3 py-2.5 cursor-text focus-within:border-[#1c1c1e] transition-colors">
-                          <p className="text-[10px] text-[#9ca3af] font-semibold uppercase tracking-wider leading-none mb-1">{label}</p>
-                          <input
-                            type="text"
-                            placeholder="MM/DD/YYYY"
-                            value={display}
-                            onChange={e => {
-                              const v = e.target.value
-                              const m = v.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/)
-                              if (m) set(`${m[3]}-${m[1].padStart(2,'0')}-${m[2].padStart(2,'0')}`)
-                              else if (!v) set('')
-                            }}
-                            className="w-full text-[13px] font-bold text-[#1c1c1e] bg-transparent outline-none leading-none placeholder:text-[#d1d0cc] placeholder:font-normal"
-                          />
+                        <label key={label} className="flex-1 border border-[#e8e7e3] rounded-2xl px-3 py-2.5 cursor-pointer focus-within:border-[#1c1c1e] transition-colors">
+                          <p className="text-[10px] text-[#9ca3af] font-semibold uppercase tracking-wider leading-none mb-1.5">{label}</p>
+                          <div className="flex items-center gap-1">
+                            <select value={selMonth || ''} onChange={e => update(selYear || '', e.target.value)}
+                              className="flex-1 text-[12px] font-bold text-[#1c1c1e] bg-transparent outline-none cursor-pointer min-w-0">
+                              <option value="">Mon</option>
+                              {months.map((m, i) => <option key={m} value={String(i+1).padStart(2,'0')}>{m}</option>)}
+                            </select>
+                            <span className="text-[11px] text-[#d1d0cc] flex-shrink-0">/</span>
+                            <select value={selYear || ''} onChange={e => update(e.target.value, selMonth || '')}
+                              className="text-[12px] font-bold text-[#1c1c1e] bg-transparent outline-none cursor-pointer flex-shrink-0">
+                              <option value="">Year</option>
+                              <option value="2025">2025</option>
+                              <option value="2026">2026</option>
+                            </select>
+                          </div>
                         </label>
                       )
                     })}
