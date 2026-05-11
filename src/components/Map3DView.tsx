@@ -59,6 +59,16 @@ const listingCoords: Record<number, [number, number]> = {
 
 function walkRadiusMeters(mins: number) { return mins * 83; }
 
+/** Fly map to frame a zone rectangle centered with padding */
+function flyToZone(map: maplibregl.Map, zone: { coords: [number, number][] }) {
+  const lngs = zone.coords.map(c => c[0]);
+  const lats = zone.coords.map(c => c[1]);
+  map.fitBounds(
+    [[Math.min(...lngs), Math.min(...lats)], [Math.max(...lngs), Math.max(...lats)]],
+    { padding: { top: 120, bottom: 120, left: 80, right: 80 }, pitch: 45, bearing: -15, duration: 750, essential: true }
+  );
+}
+
 // ── Campus district zones — simple grid-aligned rectangles ──
 const campusZones: {
   id: string; name: string; nameEn: string; color: string;
@@ -318,7 +328,7 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
         setActiveZoneId(next);
         setPickedCollege(next ? (colleges.find(c => c.id === next) ?? null) : null);
         if (next) {
-          map.flyTo({ center: zone.center, zoom: 15.8, pitch: 52, bearing: -20, duration: 700, essential: true });
+          flyToZone(map, zone);
         } else {
           map.flyTo({ center: [-88.2272, 40.1075] as [number, number], zoom: 15.5, pitch: 55, bearing: -20, duration: 700, essential: true });
         }
@@ -663,7 +673,7 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
                     setActiveZoneId(next);
                     setPickedCollege(next ? (colleges.find(c => c.id === next) ?? null) : null);
                     if (next && mapRef.current) {
-                      mapRef.current.flyTo({ center: zone.center, zoom: 15.8, pitch: 52, bearing: -20, duration: 700, essential: true });
+                      flyToZone(mapRef.current, zone);
                     } else if (!next && mapRef.current) {
                       mapRef.current.flyTo({ center: [-88.2272, 40.1075], zoom: 15.5, pitch: 55, bearing: -20, duration: 700, essential: true });
                     }
@@ -721,7 +731,7 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
               setActiveZoneId(next);
               setPickedCollege(next ? (colleges.find(c => c.id === next) ?? null) : null);
               if (next && mapRef.current) {
-                mapRef.current.flyTo({ center: zone.center, zoom: 15.8, pitch: 52, bearing: -20, duration: 700, essential: true });
+                flyToZone(mapRef.current, zone);
               } else if (!next && mapRef.current) {
                 mapRef.current.flyTo({ center: [-88.2272, 40.1075], zoom: 15.5, pitch: 55, bearing: -20, duration: 700, essential: true });
               }
@@ -1126,7 +1136,8 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
                     <button key={c.id} onClick={() => {
                       setPickedCollege(c);
                       setActiveZoneId(c.id);
-                      mapRef.current?.flyTo({ center: c.coords, zoom: 15.5, pitch: 52, bearing: -20, duration: 700, essential: true });
+                      const z = campusZones.find(z => z.id === c.id);
+                      if (z && mapRef.current) flyToZone(mapRef.current, z);
                     }} style={{
                       display: 'flex', alignItems: 'center', gap: 5,
                       padding: '6px 8px', borderRadius: 10, border: '1px solid #f0efeb',
