@@ -5,6 +5,7 @@ import { listings } from '../data/listings';
 import type { StudentProfile } from '../data/profile';
 import { matchScore, matchReasons } from '../data/profile';
 import type { College } from '../data/colleges';
+import { colleges } from '../data/colleges';
 
 interface PinPosition { id: number; x: number; y: number }
 
@@ -191,6 +192,7 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
   const [mapZoom, setMapZoom] = useState(15.5);
   const [mapMaxPrice, setMapMaxPrice] = useState<number | null>(null);
   const [walkTimeMins, setWalkTimeMins] = useState<5 | 10 | 15>(10);
+  const [pickedCollege, setPickedCollege] = useState<College | null>(null);
 
   const rankedListings = profile
     ? [...listings].sort((a, b) => matchScore(b, profile) - matchScore(a, profile))
@@ -575,7 +577,7 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
   const selectedListing = listings.find(l => l.id === selectedId) ?? null;
   const selectedScore = selectedListing && profile ? scores[selectedListing.id] : 0;
   const selectedReasons = selectedListing && profile ? matchReasons(selectedListing, profile) : [];
-  const activeCollege = profile?.college ?? selectedCollege;
+  const activeCollege = profile?.college ?? selectedCollege ?? pickedCollege;
 
   return (
     <div className="relative flex-1 overflow-hidden flex flex-col select-none">
@@ -1062,35 +1064,65 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
               </div>
             </div>
 
-            {/* ── Walk time segmented control — only when college is set ── */}
-            {activeCollege && (<>
-              <div style={{ height: 1, background: '#f0efeb', margin: '0 -2px 12px' }} />
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <circle cx="12" cy="5" r="1.5"/><path d="M9 19l1-6 2 2 2-6"/><path d="M7 10l2-2 4 1 2-2"/>
-                    </svg>
-                    <span style={{ fontSize: 9, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Walk</span>
-                  </div>
-                  <span style={{ fontSize: 9, color: '#6366f1', fontWeight: 600 }}>{activeCollege.short}</span>
+            {/* ── Walk section ── */}
+            <div style={{ height: 1, background: '#f0efeb', margin: '0 -2px 12px' }} />
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="5" r="1.5"/><path d="M9 19l1-6 2 2 2-6"/><path d="M7 10l2-2 4 1 2-2"/>
+                  </svg>
+                  <span style={{ fontSize: 9, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Walk from</span>
                 </div>
-                <div style={{ display: 'flex', background: '#f5f4f0', borderRadius: 11, padding: 3, gap: 2 }}>
-                  {([5, 10, 15] as const).map(m => (
-                    <button key={m} onClick={() => setWalkTimeMins(m)} style={{
-                      flex: 1, padding: '5px 0', borderRadius: 8, border: 'none', cursor: 'pointer',
-                      background: walkTimeMins === m ? 'white' : 'transparent',
-                      boxShadow: walkTimeMins === m ? '0 1px 4px rgba(0,0,0,0.12)' : 'none',
-                      fontSize: 11, fontWeight: 700,
-                      color: walkTimeMins === m ? '#1c1c1e' : '#9ca3af',
-                      transition: 'all 0.15s ease',
-                    }}>
-                      {m}m
+                {activeCollege && (
+                  <button onClick={() => setPickedCollege(null)} style={{ fontSize: 9, color: '#9ca3af', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>✕</button>
+                )}
+              </div>
+
+              {activeCollege ? (
+                /* Walk time segmented control */
+                <>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8, padding: '5px 8px', background: '#f5f4f0', borderRadius: 10 }}>
+                    <span style={{ fontSize: 13 }}>{activeCollege.emoji}</span>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: '#1c1c1e' }}>{activeCollege.short}</span>
+                  </div>
+                  <div style={{ display: 'flex', background: '#f5f4f0', borderRadius: 11, padding: 3, gap: 2 }}>
+                    {([5, 10, 15] as const).map(m => (
+                      <button key={m} onClick={() => setWalkTimeMins(m)} style={{
+                        flex: 1, padding: '5px 0', borderRadius: 8, border: 'none', cursor: 'pointer',
+                        background: walkTimeMins === m ? 'white' : 'transparent',
+                        boxShadow: walkTimeMins === m ? '0 1px 4px rgba(0,0,0,0.12)' : 'none',
+                        fontSize: 11, fontWeight: 700,
+                        color: walkTimeMins === m ? '#1c1c1e' : '#9ca3af',
+                        transition: 'all 0.15s ease',
+                      }}>
+                        {m}m
+                      </button>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                /* College picker grid */
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 4 }}>
+                  {colleges.map(c => (
+                    <button key={c.id} onClick={() => {
+                      setPickedCollege(c);
+                      mapRef.current?.flyTo({ center: c.coords, zoom: 15.5, pitch: 52, bearing: -20, duration: 700, essential: true });
+                    }} style={{
+                      display: 'flex', alignItems: 'center', gap: 5,
+                      padding: '6px 8px', borderRadius: 10, border: '1px solid #f0efeb',
+                      background: 'white', cursor: 'pointer', textAlign: 'left',
+                      transition: 'border-color 0.15s',
+                    }}
+                    onMouseEnter={e => (e.currentTarget.style.borderColor = '#d1d0cc')}
+                    onMouseLeave={e => (e.currentTarget.style.borderColor = '#f0efeb')}>
+                      <span style={{ fontSize: 13 }}>{c.emoji}</span>
+                      <span style={{ fontSize: 10, fontWeight: 700, color: '#1c1c1e', lineHeight: 1.2 }}>{c.short}</span>
                     </button>
                   ))}
                 </div>
-              </div>
-            </>)}
+              )}
+            </div>
           </div>
         </div>
       )}
