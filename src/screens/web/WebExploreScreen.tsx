@@ -187,10 +187,10 @@ const fmtDate = (d: string) => {
 const discountPct = (price: number, market: number) => Math.round((1 - price / market) * 100)
 
 const subleaseTypeOptions = [
-  { id: 'all' as const,       label: 'All',          desc: 'All types' },
-  { id: 'sublease' as const,  label: '🔄 Sublet',    desc: 'Temp — owner returns' },
-  { id: 'transfer' as const,  label: '📋 Transfer',  desc: 'Take over lease contract' },
-  { id: 'roomshare' as const, label: '🏠 Room Share', desc: 'Split room with roommate' },
+  { id: 'all' as const,       label: 'All',        icon: '🏘️', desc: 'All types' },
+  { id: 'sublease' as const,  label: 'Sublet',     icon: '🔄', desc: 'Temp — owner returns' },
+  { id: 'transfer' as const,  label: 'Transfer',   icon: '📋', desc: 'Take over lease' },
+  { id: 'roomshare' as const, label: 'Room Share', icon: '🏠', desc: 'Split with roommate' },
 ]
 
 export default function WebExploreScreen({ onViewListing: _onViewListing, onNavigate, initialListingId, initialSubleaseId, savedIds, onToggleSave }: Props) {
@@ -721,10 +721,10 @@ export default function WebExploreScreen({ onViewListing: _onViewListing, onNavi
                 {/* Quick filters */}
                 <div className="flex flex-wrap gap-1.5">
                   {[
-                    { label: '🔴 Urgent deals', active: urgencyFilter === 'urgent', fn: () => setUrgencyFilter(urgencyFilter === 'urgent' ? null : 'urgent') },
-                    { label: '≥30% off',         active: minDiscount === 30,        fn: () => setMinDiscount(minDiscount === 30 ? null : 30) },
-                    { label: '🏠 Room Share',    active: subleaseType === 'roomshare', fn: () => setSubleaseType(subleaseType === 'roomshare' ? 'all' : 'roomshare') },
-                    { label: 'Utils incl.',       active: false,                     fn: () => {} },
+                    { label: '🔴 Urgent deals', active: urgencyFilter === 'urgent',      fn: () => setUrgencyFilter(urgencyFilter === 'urgent' ? null : 'urgent') },
+                    { label: '≥30% off',         active: minDiscount === 30,             fn: () => setMinDiscount(minDiscount === 30 ? null : 30) },
+                    { label: '🏠 Room Share',    active: subleaseType === 'roomshare',   fn: () => setSubleaseType(subleaseType === 'roomshare' ? 'all' : 'roomshare') },
+                    { label: 'Utils incl.',       active: false,                          fn: () => {} },
                   ].map((q, i) => (
                     <button key={i} onClick={q.fn}
                       className={`px-2.5 py-1 rounded-full text-[10px] font-bold border transition-all ${q.active ? 'bg-[#1c1c1e] text-white border-[#1c1c1e]' : 'border-[#e8e7e3] text-[#6c6a66] hover:border-[#1c1c1e] hover:text-[#1c1c1e] bg-white'}`}>
@@ -733,86 +733,94 @@ export default function WebExploreScreen({ onViewListing: _onViewListing, onNavi
                   ))}
                 </div>
 
-                {/* Type */}
+                {/* Type of sublease — matches "Type of place" card style */}
                 <div>
-                  <p className="text-xs font-bold text-[#1c1c1e] mb-2">Type</p>
-                  <div className="grid grid-cols-2 gap-1.5">
+                  <div className="flex items-center justify-between mb-2.5">
+                    <p className="text-xs font-bold text-[#1c1c1e]">Type of sublease</p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
                     {subleaseTypeOptions.map(t => {
                       const count = t.id === 'all' ? subleaseListings.length : subleaseListings.filter(s => s.type === t.id).length
                       const isActive = subleaseType === t.id
                       return (
                         <button key={t.id} onClick={() => setSubleaseType(t.id)}
-                          className={`flex flex-col items-start px-3 py-2 rounded-xl border-2 transition-all text-left ${isActive ? 'border-[#1c1c1e] bg-[#1c1c1e] text-white' : 'border-[#e8e7e3] hover:border-[#c0bfbb]'}`}
+                          className={`flex flex-col items-start gap-2 px-3 py-3 rounded-xl border-2 transition-all text-left ${isActive ? 'border-[#1c1c1e] bg-[#f5f4f0] text-[#1c1c1e]' : 'border-[#e8e7e3] text-[#6c6a66] hover:border-[#c0bfbb] hover:text-[#1c1c1e]'}`}
                         >
-                          <span className={`text-[11px] font-bold leading-tight ${isActive ? 'text-white' : 'text-[#1c1c1e]'}`}>{t.label}</span>
-                          <span className={`text-[9px] mt-0.5 leading-tight ${isActive ? 'text-white/60' : 'text-[#9ca3af]'}`}>{t.desc} · {count}</span>
+                          <span className="text-[18px] leading-none">{t.icon}</span>
+                          <div>
+                            <span className="text-[12px] font-semibold leading-none block">{t.label}</span>
+                            <span className="text-[10px] text-[#9ca3af] leading-tight block mt-0.5">{t.desc} · {count}</span>
+                          </div>
                         </button>
                       )
                     })}
                   </div>
                 </div>
 
-                {/* Date range */}
+                {/* Date Range — matches Rental Price input box style */}
                 <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <p className="text-xs font-bold text-[#1c1c1e]">Date Range</p>
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="text-sm font-bold text-[#1c1c1e]">Date Range</p>
                     {(dateFrom || dateTo) && (
-                      <button onClick={() => { setDateFrom(''); setDateTo('') }} className="text-[10px] text-[#9ca3af] hover:text-[#1c1c1e] transition-colors">Clear</button>
+                      <button onClick={() => { setDateFrom(''); setDateTo('') }} className="text-[11px] font-medium text-[#9ca3af] hover:text-[#1c1c1e] transition-colors">Clear</button>
                     )}
                   </div>
-                  <div className="flex gap-1.5">
-                    <label className="flex-1 flex flex-col border border-[#e8e7e3] rounded-xl px-2.5 py-1.5 focus-within:border-[#1c1c1e] transition-colors cursor-text min-w-0">
-                      <span className="text-[9px] text-[#9ca3af] font-bold uppercase tracking-wider leading-none mb-1">Move-in</span>
+                  <div className="flex gap-2">
+                    <label className="flex-1 border border-[#e8e7e3] rounded-2xl px-3 py-2.5 cursor-text focus-within:border-[#1c1c1e] transition-colors">
+                      <p className="text-[10px] text-[#9ca3af] font-semibold uppercase tracking-wider leading-none mb-1">Move-in</p>
                       <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)}
-                        className="text-[11px] font-bold text-[#1c1c1e] bg-transparent outline-none w-full" />
+                        className="w-full text-[13px] font-bold text-[#1c1c1e] bg-transparent outline-none leading-none" />
                     </label>
-                    <label className="flex-1 flex flex-col border border-[#e8e7e3] rounded-xl px-2.5 py-1.5 focus-within:border-[#1c1c1e] transition-colors cursor-text min-w-0">
-                      <span className="text-[9px] text-[#9ca3af] font-bold uppercase tracking-wider leading-none mb-1">Move-out</span>
+                    <label className="flex-1 border border-[#e8e7e3] rounded-2xl px-3 py-2.5 cursor-text focus-within:border-[#1c1c1e] transition-colors">
+                      <p className="text-[10px] text-[#9ca3af] font-semibold uppercase tracking-wider leading-none mb-1">Move-out</p>
                       <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)}
-                        className="text-[11px] font-bold text-[#1c1c1e] bg-transparent outline-none w-full" />
+                        className="w-full text-[13px] font-bold text-[#1c1c1e] bg-transparent outline-none leading-none" />
                     </label>
                   </div>
                 </div>
 
-                {/* Discount */}
+                {/* Min Discount — matches Bedroom pill style */}
                 <div>
-                  <p className="text-xs font-bold text-[#1c1c1e] mb-2">Min Discount</p>
-                  <div className="flex gap-1.5 flex-wrap">
+                  <p className="text-sm font-bold text-[#1c1c1e] mb-3">Min Discount</p>
+                  <div className="flex gap-2 flex-wrap">
                     {[null, 10, 20, 30].map(d => (
                       <button key={d ?? 0} onClick={() => setMinDiscount(minDiscount === d ? null : d)}
-                        className={`px-3 py-1.5 rounded-full text-[11px] font-bold border-2 transition-all ${minDiscount === d ? 'bg-[#1c1c1e] text-white border-[#1c1c1e]' : 'border-[#e8e7e3] text-[#6c6a66] hover:border-[#c0bfbb]'}`}
+                        className={`h-10 px-3 rounded-full text-[12px] font-bold border-2 transition-all ${minDiscount === d ? 'bg-[#1c1c1e] text-white border-[#1c1c1e]' : 'border-[#e8e7e3] text-[#6c6a66] hover:border-[#1c1c1e] hover:text-[#1c1c1e]'}`}
                       >
-                        {d === null ? 'Any' : `≥${d}% off`}
+                        {d === null ? 'Any' : `≥${d}%`}
                       </button>
                     ))}
                   </div>
                 </div>
 
-                {/* Urgency */}
+                {/* Urgency — matches Amenities toggle style */}
                 <div>
-                  <p className="text-xs font-bold text-[#1c1c1e] mb-2">Urgency</p>
-                  <div className="grid grid-cols-2 gap-1.5">
+                  <p className="text-sm font-bold text-[#1c1c1e] mb-3">Urgency</p>
+                  <div className="space-y-4">
                     {([
-                      { key: null,       label: 'Any',        sub: 'Show all' },
-                      { key: 'urgent',   label: '🔴 Urgent',  sub: '≤7 days' },
-                      { key: 'soon',     label: '🟡 Soon',    sub: '1–3 weeks' },
-                      { key: 'relaxed',  label: '🟢 Relaxed', sub: '1+ month' },
-                    ] as const).map(opt => (
-                      <button key={opt.key ?? 'null'} onClick={() => setUrgencyFilter(urgencyFilter === opt.key ? null : opt.key)}
-                        className={`flex flex-col items-start px-3 py-2 rounded-xl border-2 text-left transition-all ${urgencyFilter === opt.key ? 'border-[#1c1c1e] bg-[#1c1c1e]' : 'border-[#e8e7e3] hover:border-[#c0bfbb]'}`}
-                      >
-                        <span className={`text-[11px] font-bold leading-tight ${urgencyFilter === opt.key ? 'text-white' : 'text-[#1c1c1e]'}`}>{opt.label}</span>
-                        <span className={`text-[9px] mt-0.5 leading-tight ${urgencyFilter === opt.key ? 'text-white/60' : 'text-[#9ca3af]'}`}>{opt.sub}</span>
-                      </button>
+                      { key: 'urgent' as const,  label: '🔴 Urgent',  sub: '≤7 days — best negotiation' },
+                      { key: 'soon' as const,    label: '🟡 Soon',    sub: 'Leaving in 1–3 weeks' },
+                      { key: 'relaxed' as const, label: '🟢 Relaxed', sub: '1+ month ahead' },
+                    ]).map(opt => (
+                      <div key={opt.key} className="flex items-center justify-between">
+                        <div>
+                          <span className="text-[13px] text-[#1c1c1e]">{opt.label}</span>
+                          <p className="text-[11px] text-[#9ca3af] leading-tight">{opt.sub}</p>
+                        </div>
+                        <button onClick={() => setUrgencyFilter(urgencyFilter === opt.key ? null : opt.key)}
+                          className={`w-12 h-6 rounded-full relative transition-colors flex-shrink-0 ml-3 ${urgencyFilter === opt.key ? 'bg-[#1c1c1e]' : 'bg-[#e5e4e0]'}`}>
+                          <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow-sm transition-transform ${urgencyFilter === opt.key ? 'translate-x-7' : 'translate-x-1'}`} />
+                        </button>
+                      </div>
                     ))}
                   </div>
                 </div>
 
-                {/* Price range */}
+                {/* Monthly Rent — matches Rental Price section exactly */}
                 <div>
                   <div className="flex items-center justify-between mb-3">
                     <p className="text-sm font-bold text-[#1c1c1e]">Monthly Rent</p>
-                    <span className="text-[11px] text-[#9ca3af]">{filteredSubleases.length} matches</span>
+                    <span className="text-[11px] font-medium text-[#9ca3af]">Monthly</span>
                   </div>
                   <div className="relative h-1.5 bg-[#e8e7e3] rounded-full mb-4 mx-1">
                     <div className="absolute h-full bg-[#1c1c1e] rounded-full" style={{ left: `${((subleasePriceMin - 400) / 800) * 100}%`, right: `${100 - ((subleasePriceMax - 400) / 800) * 100}%` }} />
@@ -849,25 +857,29 @@ export default function WebExploreScreen({ onViewListing: _onViewListing, onNavi
                       </div>
                     </label>
                   </div>
+                  <p className="text-[11px] text-[#9ca3af] text-right mt-1">→ <span className="font-semibold text-[#1c1c1e]">{filteredSubleases.length}</span> listing{filteredSubleases.length !== 1 ? 's' : ''} match</p>
                 </div>
 
-                {/* Area */}
+                {/* Area — identical to Rent */}
                 <div>
-                  <p className="text-sm font-bold text-[#1c1c1e] mb-3">Area</p>
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="text-sm font-bold text-[#1c1c1e]">Area</p>
+                    <span className="text-[11px] font-medium text-[#9ca3af] flex items-center gap-0.5">Neighborhood <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span>
+                  </div>
                   <div className="flex flex-wrap gap-1.5">
-                    <button onClick={() => setSubleaseArea('')} className={`px-3 py-1.5 rounded-full text-[11px] font-semibold border transition-all ${!subleaseArea ? 'bg-[#1c1c1e] text-white border-[#1c1c1e]' : 'border-[#e8e7e3] text-[#6c6a66] hover:border-[#1c1c1e]'}`}>All</button>
+                    <button onClick={() => setSubleaseArea('')} className={`px-3 py-1.5 rounded-full text-[11px] font-semibold border transition-all ${!subleaseArea ? 'bg-[#1c1c1e] text-white border-[#1c1c1e]' : 'border-[#e8e7e3] text-[#6c6a66] hover:border-[#1c1c1e] hover:text-[#1c1c1e]'}`}>All</button>
                     {areas.map(a => (
                       <button key={a.id} onClick={() => setSubleaseArea(subleaseArea === a.id ? '' : a.id)} className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-[11px] font-semibold border transition-all ${subleaseArea === a.id ? 'bg-[#1c1c1e] text-white border-[#1c1c1e]' : `${a.color} ${a.textColor} border-transparent hover:border-current`}`}>{a.emoji} {a.label}</button>
                     ))}
                   </div>
                 </div>
 
-                {/* Bedrooms */}
+                {/* Bedrooms — matches Rent bedroom pill style exactly */}
                 <div>
                   <p className="text-sm font-bold text-[#1c1c1e] mb-3">Bedrooms</p>
                   <div className="flex gap-2 flex-wrap">
                     {['Studio', '1', '2', '3+'].map(b => (
-                      <button key={b} onClick={() => setSubleaseBed(subleaseBed === b ? '' : b)} className={`h-9 min-w-[40px] px-2 rounded-full text-[12px] font-bold border-2 transition-all ${subleaseBed === b ? 'bg-[#1c1c1e] text-white border-[#1c1c1e]' : 'border-[#e8e7e3] text-[#6c6a66] hover:border-[#1c1c1e]'}`}>{b}</button>
+                      <button key={b} onClick={() => setSubleaseBed(subleaseBed === b ? '' : b)} className={`h-10 min-w-[40px] px-2 rounded-full text-[12px] font-bold border-2 transition-all ${subleaseBed === b ? 'bg-[#1c1c1e] text-white border-[#1c1c1e]' : 'border-[#e8e7e3] text-[#6c6a66] hover:border-[#1c1c1e] hover:text-[#1c1c1e]'}`}>{b}</button>
                     ))}
                   </div>
                 </div>
