@@ -759,16 +759,31 @@ export default function WebExploreScreen({ onViewListing: _onViewListing, onNavi
                     )}
                   </div>
                   <div className="flex gap-2">
-                    <label className="flex-1 border border-[#e8e7e3] rounded-2xl px-3 py-2.5 cursor-text focus-within:border-[#1c1c1e] transition-colors">
-                      <p className="text-[10px] text-[#9ca3af] font-semibold uppercase tracking-wider leading-none mb-1">Move-in</p>
-                      <input type="date" lang="en" value={dateFrom} onChange={e => setDateFrom(e.target.value)}
-                        className="w-full text-[13px] font-bold text-[#1c1c1e] bg-transparent outline-none leading-none" />
-                    </label>
-                    <label className="flex-1 border border-[#e8e7e3] rounded-2xl px-3 py-2.5 cursor-text focus-within:border-[#1c1c1e] transition-colors">
-                      <p className="text-[10px] text-[#9ca3af] font-semibold uppercase tracking-wider leading-none mb-1">Move-out</p>
-                      <input type="date" lang="en" value={dateTo} onChange={e => setDateTo(e.target.value)}
-                        className="w-full text-[13px] font-bold text-[#1c1c1e] bg-transparent outline-none leading-none" />
-                    </label>
+                    {([
+                      { label: 'Move-in',  val: dateFrom, set: setDateFrom },
+                      { label: 'Move-out', val: dateTo,   set: setDateTo  },
+                    ] as const).map(({ label, val, set }) => {
+                      const display = val
+                        ? (() => { const [y,m,d] = val.split('-'); return `${m}/${d}/${y}` })()
+                        : ''
+                      return (
+                        <label key={label} className="flex-1 border border-[#e8e7e3] rounded-2xl px-3 py-2.5 cursor-text focus-within:border-[#1c1c1e] transition-colors">
+                          <p className="text-[10px] text-[#9ca3af] font-semibold uppercase tracking-wider leading-none mb-1">{label}</p>
+                          <input
+                            type="text"
+                            placeholder="MM/DD/YYYY"
+                            value={display}
+                            onChange={e => {
+                              const v = e.target.value
+                              const m = v.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/)
+                              if (m) set(`${m[3]}-${m[1].padStart(2,'0')}-${m[2].padStart(2,'0')}`)
+                              else if (!v) set('')
+                            }}
+                            className="w-full text-[13px] font-bold text-[#1c1c1e] bg-transparent outline-none leading-none placeholder:text-[#d1d0cc] placeholder:font-normal"
+                          />
+                        </label>
+                      )
+                    })}
                   </div>
                 </div>
 
