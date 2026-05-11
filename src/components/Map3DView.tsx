@@ -633,25 +633,35 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
           <div
             key={zone.id}
             ref={el => { if (el) zoneLabelElemsRef.current.set(zone.id, el); else zoneLabelElemsRef.current.delete(zone.id); }}
+            onClick={() => {
+              const next = activeZoneId === zone.id ? null : zone.id;
+              setActiveZoneId(next);
+              if (next && mapRef.current) {
+                mapRef.current.flyTo({ center: zone.center, zoom: 15.8, pitch: 52, bearing: -20, duration: 700, essential: true });
+              } else if (!next && mapRef.current) {
+                mapRef.current.flyTo({ center: [-88.2272, 40.1075], zoom: 15.5, pitch: 55, bearing: -20, duration: 700, essential: true });
+              }
+            }}
             style={{
               position: 'absolute', left: 0, top: 0,
               transform: 'translate(-50%, -50%)',
-              pointerEvents: 'none', zIndex: 4,
+              pointerEvents: 'auto', zIndex: 4, cursor: 'pointer',
             }}
           >
             <div style={{
-              background: 'white',
-              border: '1px solid #e8e7e3',
+              background: activeZoneId === zone.id ? zone.color : 'white',
+              border: `1px solid ${activeZoneId === zone.id ? zone.color : '#e8e7e3'}`,
               borderRadius: 22,
               padding: '5px 12px 5px 9px',
               display: 'flex', alignItems: 'center', gap: 6,
-              boxShadow: '0 2px 10px rgba(0,0,0,0.12)',
+              boxShadow: activeZoneId === zone.id ? `0 4px 14px ${zone.color}55` : '0 2px 10px rgba(0,0,0,0.12)',
               whiteSpace: 'nowrap',
+              transition: 'all 0.2s ease',
             }}>
-              <div style={{ width: 7, height: 7, borderRadius: '50%', background: zone.color, flexShrink: 0 }} />
-              <span style={{ fontSize: 11, fontWeight: 700, color: '#1c1c1e', letterSpacing: '-0.1px' }}>{zone.name}</span>
+              <div style={{ width: 7, height: 7, borderRadius: '50%', background: activeZoneId === zone.id ? 'rgba(255,255,255,0.7)' : zone.color, flexShrink: 0 }} />
+              <span style={{ fontSize: 11, fontWeight: 700, color: activeZoneId === zone.id ? 'white' : '#1c1c1e', letterSpacing: '-0.1px' }}>{zone.name}</span>
               {count > 0 && (
-                <span style={{ fontSize: 10, fontWeight: 600, color: '#9ca3af', marginLeft: 1 }}>{count}</span>
+                <span style={{ fontSize: 10, fontWeight: 600, color: activeZoneId === zone.id ? 'rgba(255,255,255,0.7)' : '#9ca3af', marginLeft: 1 }}>{count}</span>
               )}
             </div>
           </div>
