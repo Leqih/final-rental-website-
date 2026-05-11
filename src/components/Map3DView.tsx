@@ -478,6 +478,7 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
     if (filteredIds && !filteredIds.includes(l.id)) return false;
     if (activeZoneId && getListingZone(listingCoords[l.id])?.id !== activeZoneId) return false;
     if (mapMaxPrice !== null && l.price > mapMaxPrice) return false;
+    if (activeCollege && (l.walkFrom[activeCollege.id] ?? 99) > walkTimeMins) return false;
     if (mapTypeFilter === 'studio') return l.beds.toLowerCase().includes('studio')
     if (mapTypeFilter === '1br') return l.beds.startsWith('1B')
     if (mapTypeFilter === '2br+') return !l.beds.toLowerCase().includes('studio') && !l.beds.startsWith('1B')
@@ -556,8 +557,8 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
                     {l.sqft}
                   </span>
                   {walkMins != null && (
-                    <span className="flex items-center gap-1 text-[10px] font-semibold text-indigo-500">
-                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    <span className={`flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${walkMins <= walkTimeMins && activeCollege ? 'bg-indigo-50 text-indigo-600' : 'text-indigo-400'}`}>
+                      <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="5" r="1.5"/><path d="M9 19l1-6 2 2 2-6"/><path d="M7 10l2-2 4 1 2-2"/></svg>
                       {walkMins}m
                     </span>
                   )}
@@ -796,6 +797,7 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
             const dotColor = !hasProfile ? '#9ca3af' : score >= 80 ? '#22c55e' : score >= 60 ? '#f59e0b' : '#9ca3af';
             const zone = showZones ? getListingZone(listingCoords[listing.id]) : null;
             const zoneColor = zone?.color;
+            const pinWalkMins = activeCollege ? (listing.walkFrom[activeCollege.id] ?? null) : null;
             return (
               <div
                 key={listing.id}
@@ -824,6 +826,12 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
                   <span style={{ fontSize: 9, background: '#ef4444', color: 'white', fontWeight: 800, padding: '2px 8px', borderRadius: 20, marginBottom: 4, whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 3 }}>
                     <svg width="9" height="9" viewBox="0 0 24 24" fill="white" stroke="white" strokeWidth="1"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
                     Saved
+                  </span>
+                )}
+                {pinWalkMins != null && !isSelected && (
+                  <span style={{ fontSize: 9, background: '#6366f1', color: 'white', fontWeight: 800, padding: '2px 8px', borderRadius: 20, marginBottom: 4, whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 3 }}>
+                    <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="5" r="1.5"/><path d="M9 19l1-6 2 2 2-6"/><path d="M7 10l2-2 4 1 2-2"/></svg>
+                    {pinWalkMins}m
                   </span>
                 )}
                 <div style={{
