@@ -272,7 +272,20 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
         setPinPositions(positions);
       }
     };
-    map.on('move', movePinsDirect);
+    // Freeze pins during drag — reposition only after drag ends
+    map.on('dragstart', () => {
+      pinElemsRef.current.forEach(el => { el.style.opacity = '0'; el.style.pointerEvents = 'none'; });
+      zoneLabelElemsRef.current.forEach(el => { el.style.opacity = '0'; });
+    });
+    map.on('dragend', () => {
+      movePinsDirect();
+      requestAnimationFrame(() => {
+        pinElemsRef.current.forEach(el => { el.style.opacity = ''; el.style.pointerEvents = ''; });
+        zoneLabelElemsRef.current.forEach(el => { el.style.opacity = ''; });
+      });
+    });
+    // Keep moveend so flyTo / fitBounds repositions pins after programmatic animations
+    map.on('moveend', movePinsDirect);
     map.on('resize', updatePinState);
 
     map.on('load', () => {
