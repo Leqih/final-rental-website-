@@ -767,7 +767,7 @@ export default function WebExploreScreen({ onViewListing: _onViewListing, onNavi
                       const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
                       const update = (y: string, m: string) => { if (y && m) set(`${y}-${m}-01`); else set('') }
                       return (
-                        <label key={label} className="flex-1 border border-[#e8e7e3] rounded-2xl px-3 py-2.5 cursor-pointer focus-within:border-[#1c1c1e] transition-colors">
+                        <div key={label} className="flex-1 border border-[#e8e7e3] rounded-2xl px-3 py-2.5 focus-within:border-[#1c1c1e] transition-colors">
                           <p className="text-[10px] text-[#9ca3af] font-semibold uppercase tracking-wider leading-none mb-1.5">{label}</p>
                           <div className="flex items-center gap-1">
                             <select value={selMonth || ''} onChange={e => update(selYear || '', e.target.value)}
@@ -783,7 +783,7 @@ export default function WebExploreScreen({ onViewListing: _onViewListing, onNavi
                               <option value="2026">2026</option>
                             </select>
                           </div>
-                        </label>
+                        </div>
                       )
                     })}
                   </div>
