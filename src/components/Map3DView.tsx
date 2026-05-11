@@ -819,11 +819,13 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
             const zone = showZones ? getListingZone(listingCoords[listing.id]) : null;
             const zoneColor = zone?.color;
             const pinWalkMins = activeCollege ? (listing.walkFrom[activeCollege.id] ?? null) : null;
+            const isOutOfRange = !!(activeCollege && pinWalkMins !== null && pinWalkMins > walkTimeMins);
             return (
               <div
                 key={listing.id}
                 ref={el => { if (el) pinElemsRef.current.set(listing.id, el); else pinElemsRef.current.delete(listing.id); }}
                 onClick={() => {
+                  if (isOutOfRange) return;
                   const next = selectedId === listing.id ? null : listing.id;
                   setSelectedId(next);
                   onPinSelect?.(next);
@@ -835,9 +837,10 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
                 style={{
                   position: 'absolute', left: pos.x, top: pos.y,
                   transform: `translate(-50%, -100%) ${isSelected ? 'scale(1.12)' : 'scale(1)'}`,
-                  zIndex: isSelected ? 20 : 10, cursor: 'pointer', pointerEvents: 'auto',
-                  display: 'flex', flexDirection: 'column', alignItems: 'center', transition: 'transform 0.2s ease, opacity 0.2s ease',
-                  opacity: 1,
+                  zIndex: isSelected ? 20 : isOutOfRange ? 5 : 10, cursor: isOutOfRange ? 'default' : 'pointer', pointerEvents: 'auto',
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', transition: 'transform 0.2s ease, opacity 0.25s ease, filter 0.25s ease',
+                  opacity: isOutOfRange ? 0.22 : 1,
+                  filter: isOutOfRange ? 'grayscale(1) blur(0.5px)' : 'none',
                 }}
               >
                 {isBestMatch && !isSelected && (
