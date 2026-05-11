@@ -1062,38 +1062,35 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
               </div>
             </div>
 
-            {/* ── Divider ── */}
-            <div style={{ height: 1, background: '#f0efeb', margin: '0 -2px 12px' }} />
-
-            {/* ── Walk time segmented control ── */}
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="12" cy="5" r="1.5"/><path d="M9 19l1-6 2 2 2-6"/><path d="M7 10l2-2 4 1 2-2"/>
-                  </svg>
-                  <span style={{ fontSize: 9, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Walk</span>
+            {/* ── Walk time segmented control — only when college is set ── */}
+            {activeCollege && (<>
+              <div style={{ height: 1, background: '#f0efeb', margin: '0 -2px 12px' }} />
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="12" cy="5" r="1.5"/><path d="M9 19l1-6 2 2 2-6"/><path d="M7 10l2-2 4 1 2-2"/>
+                    </svg>
+                    <span style={{ fontSize: 9, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Walk</span>
+                  </div>
+                  <span style={{ fontSize: 9, color: '#6366f1', fontWeight: 600 }}>{activeCollege.short}</span>
                 </div>
-                <span style={{ fontSize: 9, color: activeCollege ? '#6366f1' : '#d1d0cc', fontWeight: 600 }}>
-                  {activeCollege ? activeCollege.short : 'no college'}
-                </span>
+                <div style={{ display: 'flex', background: '#f5f4f0', borderRadius: 11, padding: 3, gap: 2 }}>
+                  {([5, 10, 15] as const).map(m => (
+                    <button key={m} onClick={() => setWalkTimeMins(m)} style={{
+                      flex: 1, padding: '5px 0', borderRadius: 8, border: 'none', cursor: 'pointer',
+                      background: walkTimeMins === m ? 'white' : 'transparent',
+                      boxShadow: walkTimeMins === m ? '0 1px 4px rgba(0,0,0,0.12)' : 'none',
+                      fontSize: 11, fontWeight: 700,
+                      color: walkTimeMins === m ? '#1c1c1e' : '#9ca3af',
+                      transition: 'all 0.15s ease',
+                    }}>
+                      {m}m
+                    </button>
+                  ))}
+                </div>
               </div>
-              {/* Segmented pill */}
-              <div style={{ display: 'flex', background: '#f5f4f0', borderRadius: 11, padding: 3, gap: 2 }}>
-                {([5, 10, 15] as const).map(m => (
-                  <button key={m} onClick={() => setWalkTimeMins(m)} style={{
-                    flex: 1, padding: '5px 0', borderRadius: 8, border: 'none', cursor: 'pointer',
-                    background: walkTimeMins === m ? 'white' : 'transparent',
-                    boxShadow: walkTimeMins === m ? '0 1px 4px rgba(0,0,0,0.12)' : 'none',
-                    fontSize: 11, fontWeight: 700,
-                    color: walkTimeMins === m ? '#1c1c1e' : '#9ca3af',
-                    transition: 'all 0.15s ease',
-                  }}>
-                    {m}m
-                  </button>
-                ))}
-              </div>
-            </div>
+            </>)}
           </div>
         </div>
       )}
