@@ -818,7 +818,12 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
                 {isBestMatch && !isSelected && (
                   <span style={{ fontSize: 9, background: '#22c55e', color: 'white', fontWeight: 800, padding: '2px 7px', borderRadius: 20, marginBottom: 4, whiteSpace: 'nowrap', display: 'block' }}>★ Best match</span>
                 )}
-                <div style={{ position: 'relative' }}>
+                {savedIds.has(listing.id) && !isSelected && (
+                  <span style={{ fontSize: 9, background: '#ef4444', color: 'white', fontWeight: 800, padding: '2px 8px', borderRadius: 20, marginBottom: 4, whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 3 }}>
+                    <svg width="9" height="9" viewBox="0 0 24 24" fill="white" stroke="white" strokeWidth="1"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                    Saved
+                  </span>
+                )}
                 <div style={{
                   background: isSelected ? (zoneColor ?? '#1c1c1e') : 'rgba(255,255,255,0.97)',
                   color: isSelected ? 'white' : (zoneColor ?? '#1c1c1e'),
@@ -826,8 +831,8 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
                   display: 'flex', alignItems: 'center', gap: 5,
                   boxShadow: isSelected
                     ? `0 6px 24px ${zoneColor ? zoneColor + '66' : 'rgba(0,0,0,0.3)'}`
-                    : `0 2px 12px rgba(0,0,0,0.14)`,
-                  border: isSelected ? 'none' : `2px solid ${zoneColor ?? 'rgba(0,0,0,0.08)'}`,
+                    : savedIds.has(listing.id) ? '0 2px 12px rgba(239,68,68,0.25)' : `0 2px 12px rgba(0,0,0,0.14)`,
+                  border: isSelected ? 'none' : savedIds.has(listing.id) ? '2px solid #ef4444' : `2px solid ${zoneColor ?? 'rgba(0,0,0,0.08)'}`,
                   fontSize: 12, fontWeight: 800, whiteSpace: 'nowrap',
                 }}>
                   <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke={isSelected ? 'white' : (zoneColor ?? '#1c1c1e')} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -835,10 +840,6 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
                     <polyline points="9 22 9 12 15 12 15 22" />
                   </svg>
                   <span>${listing.price}/mo</span>
-                </div>
-                {savedIds.has(listing.id) && (
-                  <div style={{ position: 'absolute', top: -5, right: -5, width: 15, height: 15, borderRadius: '50%', background: '#ef4444', border: '2px solid white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 7 }}>❤</div>
-                )}
                 </div>
                 <div style={{ width: 2, height: 8, background: isSelected ? (zoneColor ?? '#1c1c1e') : (zoneColor ?? 'rgba(0,0,0,0.2)'), marginTop: -1 }} />
                 <div style={{ width: 7, height: 7, borderRadius: '50%', background: isSelected ? (zoneColor ?? '#1c1c1e') : (zoneColor ?? dotColor), border: '2px solid white', boxShadow: '0 1px 4px rgba(0,0,0,0.25)', marginTop: -1 }} />
