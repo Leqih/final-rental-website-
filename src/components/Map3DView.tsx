@@ -1055,26 +1055,7 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
         <div className="absolute left-3 pointer-events-auto" style={{ zIndex: 10, bottom: 190 }}>
           <div style={{ width: 176, background: 'white', borderRadius: 20, boxShadow: '0 8px 32px rgba(0,0,0,0.13)', border: '1px solid rgba(0,0,0,0.06)', padding: '14px 14px 12px' }}>
 
-            {/* ── Budget ── */}
-            <div style={{ marginBottom: 10 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 7 }}>
-                <span style={{ fontSize: 9, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Budget</span>
-                <span style={{ fontSize: 14, fontWeight: 800, color: '#1c1c1e', letterSpacing: '-0.3px' }}>
-                  {mapMaxPrice ? `≤ $${mapMaxPrice}` : 'Any'}
-                </span>
-              </div>
-              <input type="range" min={600} max={1400} step={50}
-                value={mapMaxPrice ?? 1400}
-                onChange={e => setMapMaxPrice(+e.target.value === 1400 ? null : +e.target.value)}
-                style={{ width: '100%', accentColor: '#1c1c1e', cursor: 'pointer', display: 'block' }} />
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 3 }}>
-                <span style={{ fontSize: 8, color: '#d1d0cc' }}>$600</span>
-                <span style={{ fontSize: 8, color: '#d1d0cc' }}>Any</span>
-              </div>
-            </div>
-
             {/* ── Walk section ── */}
-            <div style={{ height: 1, background: '#f0efeb', margin: '0 -2px 12px' }} />
             <div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
