@@ -580,11 +580,11 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
               const count = listings.filter(l => getListingZone(listingCoords[l.id])?.id === zone.id).length;
               return (
                 <div key={zone.id}
-                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-[10px] font-bold shadow-md border backdrop-blur-md"
-                  style={{ background: zone.color + '18', borderColor: zone.color + '50', color: zone.color }}>
-                  <div style={{ width: 6, height: 6, borderRadius: '50%', background: zone.color, flexShrink: 0 }} />
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-[10px] font-bold shadow-md border bg-white"
+                  style={{ borderColor: '#e8e7e3', color: '#1c1c1e' }}>
+                  <div style={{ width: 7, height: 7, borderRadius: '50%', background: zone.color, flexShrink: 0 }} />
                   <span>{zone.name}</span>
-                  {count > 0 && <span style={{ opacity: 0.65 }}>{count}</span>}
+                  {count > 0 && <span className="text-[#9ca3af] font-semibold">{count}</span>}
                 </div>
               );
             })}
@@ -626,20 +626,18 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
             }}
           >
             <div style={{
-              background: `${zone.color}1a`,
-              backdropFilter: 'blur(10px)',
-              WebkitBackdropFilter: 'blur(10px)',
-              border: `1.5px solid ${zone.color}60`,
+              background: 'white',
+              border: '1px solid #e8e7e3',
               borderRadius: 22,
               padding: '5px 12px 5px 9px',
               display: 'flex', alignItems: 'center', gap: 6,
-              boxShadow: `0 2px 12px ${zone.color}30`,
+              boxShadow: '0 2px 10px rgba(0,0,0,0.12)',
               whiteSpace: 'nowrap',
             }}>
-              <div style={{ width: 7, height: 7, borderRadius: '50%', background: zone.color, flexShrink: 0, boxShadow: `0 0 6px ${zone.color}` }} />
-              <span style={{ fontSize: 11, fontWeight: 800, color: zone.color, letterSpacing: '-0.1px' }}>{zone.name}</span>
+              <div style={{ width: 7, height: 7, borderRadius: '50%', background: zone.color, flexShrink: 0 }} />
+              <span style={{ fontSize: 11, fontWeight: 700, color: '#1c1c1e', letterSpacing: '-0.1px' }}>{zone.name}</span>
               {count > 0 && (
-                <span style={{ fontSize: 10, fontWeight: 700, color: zone.color, opacity: 0.65, marginLeft: 1 }}>{count}</span>
+                <span style={{ fontSize: 10, fontWeight: 600, color: '#9ca3af', marginLeft: 1 }}>{count}</span>
               )}
             </div>
           </div>
