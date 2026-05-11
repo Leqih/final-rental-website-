@@ -478,7 +478,6 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
 
   const typeFilteredListings = listings.filter(l => {
     if (filteredIds && !filteredIds.includes(l.id)) return false;
-    if (activeZoneId && getListingZone(listingCoords[l.id])?.id !== activeZoneId) return false;
     if (mapMaxPrice !== null && l.price > mapMaxPrice) return false;
     if (activeCollege && (l.walkFrom[activeCollege.id] ?? 99) > walkTimeMins) return false;
     if (mapTypeFilter === 'studio') return l.beds.toLowerCase().includes('studio')
@@ -788,7 +787,6 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
           pinPositions.map(pos => {
             const listing = listings.find(l => l.id === pos.id);
             if (!listing) return null;
-            const inZone = !activeZoneId || getListingZone(listingCoords[listing.id])?.id === activeZoneId;
             if (mapZoom < 14.5) return null;
             if (filteredIds && !filteredIds.includes(listing.id)) return null;
             const isSelected = selectedId === listing.id;
@@ -817,7 +815,7 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
                   transform: `translate(-50%, -100%) ${isSelected ? 'scale(1.12)' : 'scale(1)'}`,
                   zIndex: isSelected ? 20 : 10, cursor: 'pointer', pointerEvents: 'auto',
                   display: 'flex', flexDirection: 'column', alignItems: 'center', transition: 'transform 0.2s ease, opacity 0.2s ease',
-                  opacity: inZone ? 1 : 0.25,
+                  opacity: 1,
                 }}
               >
                 {isBestMatch && !isSelected && (
@@ -1075,7 +1073,11 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8, padding: '5px 8px', background: '#f5f4f0', borderRadius: 10 }}>
                     <span style={{ fontSize: 13 }}>{activeCollege.emoji}</span>
                     <span style={{ fontSize: 11, fontWeight: 700, color: '#1c1c1e' }}>{activeCollege.short}</span>
+                    <span style={{ fontSize: 10, color: '#9ca3af', marginLeft: 'auto' }}>{typeFilteredListings.length} found</span>
                   </div>
+                  <p style={{ fontSize: 9, color: '#9ca3af', marginBottom: 8, lineHeight: 1.4 }}>
+                    只显示步行范围内的房源
+                  </p>
                   <div style={{ display: 'flex', background: '#f5f4f0', borderRadius: 11, padding: 3, gap: 2 }}>
                     {([5, 10, 15] as const).map(m => (
                       <button key={m} onClick={() => setWalkTimeMins(m)} style={{
