@@ -192,6 +192,7 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
   const subleasePinsRef = useRef<SubleasePin[]>(subleasePins);
   modeRef.current = mode;
   subleasePinsRef.current = subleasePins;
+  const [showSchoolPicker, setShowSchoolPicker] = useState(false);
   const [showZones, setShowZones] = useState(false);
   const showZonesRef = useRef(false);
   showZonesRef.current = showZones;
@@ -627,19 +628,57 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
       <div className="absolute top-3 left-3 right-3 z-20 flex flex-col gap-2">
         {/* Search bar + 3D toggle row */}
         <div className="flex items-center gap-2">
-          <div className="bg-white rounded-2xl shadow-lg border border-black/6 flex items-center px-4 h-12 gap-3 flex-1 min-w-0">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-            </svg>
-            <div className="flex flex-col flex-1 min-w-0">
-              <span className="text-[9px] text-[#9ca3af] font-semibold uppercase tracking-wider leading-none">Region</span>
-              <span className="text-[13px] font-semibold text-[#1c1c1e] leading-tight">UIUC area, Champaign IL</span>
-            </div>
-            <button className="w-8 h-8 rounded-full bg-[#1c1c1e] flex items-center justify-center flex-shrink-0">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                <polygon points="3 11 22 2 13 21 11 13 3 11"/>
+          {/* School picker trigger */}
+          <div className="relative flex-1 min-w-0">
+            <button
+              onClick={() => setShowSchoolPicker(v => !v)}
+              className="w-full bg-white rounded-2xl shadow-lg border border-black/6 flex items-center px-4 h-12 gap-3 text-left"
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              </svg>
+              <div className="flex flex-col flex-1 min-w-0">
+                <span className="text-[9px] text-[#9ca3af] font-semibold uppercase tracking-wider leading-none">School</span>
+                <span className="text-[13px] font-semibold text-[#1c1c1e] leading-tight truncate">UIUC · Champaign IL</span>
+              </div>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="6 9 12 15 18 9"/>
               </svg>
             </button>
+
+            {/* School dropdown */}
+            {showSchoolPicker && (
+              <div style={{ position: 'absolute', top: 52, left: 0, right: 0, background: 'white', borderRadius: 18, boxShadow: '0 8px 32px rgba(0,0,0,0.14)', border: '1px solid rgba(0,0,0,0.07)', overflow: 'hidden', zIndex: 50 }}>
+                {[
+                  { name: 'UIUC', location: 'Champaign, IL', active: true, emoji: '🌽' },
+                  { name: 'Northwestern', location: 'Evanston, IL', active: false, emoji: '🔮' },
+                  { name: 'UChicago', location: 'Chicago, IL', active: false, emoji: '🦅' },
+                  { name: 'Purdue', location: 'West Lafayette, IN', active: false, emoji: '🚂' },
+                  { name: 'UMich', location: 'Ann Arbor, MI', active: false, emoji: '〽️' },
+                ].map(school => (
+                  <button
+                    key={school.name}
+                    onClick={() => setShowSchoolPicker(false)}
+                    style={{
+                      width: '100%', display: 'flex', alignItems: 'center', gap: 12,
+                      padding: '11px 16px', background: 'none', border: 'none',
+                      cursor: school.active ? 'default' : 'pointer', textAlign: 'left',
+                      borderBottom: '1px solid #f5f4f0',
+                    }}
+                  >
+                    <span style={{ fontSize: 20 }}>{school.emoji}</span>
+                    <div style={{ flex: 1 }}>
+                      <p style={{ fontSize: 13, fontWeight: 700, color: school.active ? '#4f46e5' : '#1c1c1e', margin: 0, lineHeight: 1.3 }}>{school.name}</p>
+                      <p style={{ fontSize: 11, color: '#9ca3af', margin: 0, lineHeight: 1.3 }}>{school.location}</p>
+                    </div>
+                    {school.active
+                      ? <span style={{ fontSize: 10, background: '#eef2ff', color: '#4f46e5', fontWeight: 700, padding: '2px 8px', borderRadius: 20 }}>Current</span>
+                      : <span style={{ fontSize: 10, background: '#f5f4f0', color: '#9ca3af', fontWeight: 600, padding: '2px 8px', borderRadius: 20 }}>Soon</span>
+                    }
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
           {/* 3D / 2D toggle */}
           <button onClick={toggle3D}
