@@ -832,8 +832,10 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
             const zone = showZones ? getListingZone(listingCoords[listing.id]) : null;
             const zoneColor = zone?.color;
             const pinWalkMins = activeCollege ? (listing.walkFrom[activeCollege.id] ?? null) : null;
-            const isOutOfRange = !!(activeCollege && pinWalkMins !== null && pinWalkMins > walkTimeMins);
-            const isOutOfZone = !!(effectiveZoneId && zone?.id !== effectiveZoneId);
+            // Walk-panel: dim by walk range; zone-chip click: dim by zone boundary
+            // (don't combine — effectiveZoneId from walk pick would dim by zone instead of range)
+            const isOutOfRange = !!(activeCollege && (listing.walkFrom[activeCollege.id] ?? 99) > walkTimeMins);
+            const isOutOfZone = !!(activeZoneId && zone?.id !== activeZoneId);
             const isDimmed = isOutOfRange || isOutOfZone;
             return (
               <div
