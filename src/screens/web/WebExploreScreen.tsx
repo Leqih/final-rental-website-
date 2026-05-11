@@ -550,7 +550,7 @@ export default function WebExploreScreen({ onViewListing: _onViewListing, onNavi
 
         {!panelCollapsed && <>
           {/* Scrollable filter area */}
-          <div className="flex-1 min-h-0 overflow-y-auto px-4 pt-4 pb-3 space-y-5 border-b border-[#f0efeb]">
+          <div className="flex-1 min-h-0 overflow-y-auto px-4 pt-4 pb-3 space-y-4 border-b border-[#f0efeb]">
 
             {/* Rent / Sublease toggle */}
             <div className="flex bg-[#f5f4f0] rounded-xl p-1 gap-1">
@@ -721,13 +721,13 @@ export default function WebExploreScreen({ onViewListing: _onViewListing, onNavi
                 {/* Quick filters */}
                 <div className="flex flex-wrap gap-1.5">
                   {[
-                    { label: '🔴 Urgent deals', fn: () => { setUrgencyFilter('urgent'); setSubleaseType('all') } },
-                    { label: '≥30% off', fn: () => { setMinDiscount(30); setSubleaseType('all') } },
-                    { label: '🏠 Room Share', fn: () => setSubleaseType('roomshare') },
-                    { label: 'Utils incl.', fn: () => {} },
+                    { label: '🔴 Urgent deals', active: urgencyFilter === 'urgent', fn: () => setUrgencyFilter(urgencyFilter === 'urgent' ? null : 'urgent') },
+                    { label: '≥30% off',         active: minDiscount === 30,        fn: () => setMinDiscount(minDiscount === 30 ? null : 30) },
+                    { label: '🏠 Room Share',    active: subleaseType === 'roomshare', fn: () => setSubleaseType(subleaseType === 'roomshare' ? 'all' : 'roomshare') },
+                    { label: 'Utils incl.',       active: false,                     fn: () => {} },
                   ].map((q, i) => (
                     <button key={i} onClick={q.fn}
-                      className="px-2.5 py-1 rounded-full text-[10px] font-bold border border-[#e8e7e3] text-[#6c6a66] hover:border-[#1c1c1e] hover:text-[#1c1c1e] transition-all bg-white">
+                      className={`px-2.5 py-1 rounded-full text-[10px] font-bold border transition-all ${q.active ? 'bg-[#1c1c1e] text-white border-[#1c1c1e]' : 'border-[#e8e7e3] text-[#6c6a66] hover:border-[#1c1c1e] hover:text-[#1c1c1e] bg-white'}`}>
                       {q.label}
                     </button>
                   ))}
@@ -735,16 +735,16 @@ export default function WebExploreScreen({ onViewListing: _onViewListing, onNavi
 
                 {/* Type */}
                 <div>
-                  <p className="text-xs font-bold text-[#1c1c1e] mb-2.5">Type</p>
+                  <p className="text-xs font-bold text-[#1c1c1e] mb-2">Type</p>
                   <div className="grid grid-cols-2 gap-1.5">
                     {subleaseTypeOptions.map(t => {
                       const count = t.id === 'all' ? subleaseListings.length : subleaseListings.filter(s => s.type === t.id).length
                       const isActive = subleaseType === t.id
                       return (
                         <button key={t.id} onClick={() => setSubleaseType(t.id)}
-                          className={`flex flex-col items-start px-3 py-2.5 rounded-xl border-2 transition-all text-left ${isActive ? 'border-[#1c1c1e] bg-[#1c1c1e] text-white' : 'border-[#e8e7e3] hover:border-[#c0bfbb]'}`}
+                          className={`flex flex-col items-start px-3 py-2 rounded-xl border-2 transition-all text-left ${isActive ? 'border-[#1c1c1e] bg-[#1c1c1e] text-white' : 'border-[#e8e7e3] hover:border-[#c0bfbb]'}`}
                         >
-                          <span className={`text-[12px] font-bold leading-tight ${isActive ? 'text-white' : 'text-[#1c1c1e]'}`}>{t.label}</span>
+                          <span className={`text-[11px] font-bold leading-tight ${isActive ? 'text-white' : 'text-[#1c1c1e]'}`}>{t.label}</span>
                           <span className={`text-[9px] mt-0.5 leading-tight ${isActive ? 'text-white/60' : 'text-[#9ca3af]'}`}>{t.desc} · {count}</span>
                         </button>
                       )
@@ -754,29 +754,29 @@ export default function WebExploreScreen({ onViewListing: _onViewListing, onNavi
 
                 {/* Date range */}
                 <div>
-                  <div className="flex items-center justify-between mb-2.5">
+                  <div className="flex items-center justify-between mb-2">
                     <p className="text-xs font-bold text-[#1c1c1e]">Date Range</p>
                     {(dateFrom || dateTo) && (
                       <button onClick={() => { setDateFrom(''); setDateTo('') }} className="text-[10px] text-[#9ca3af] hover:text-[#1c1c1e] transition-colors">Clear</button>
                     )}
                   </div>
-                  <div className="space-y-1.5">
-                    <label className="flex flex-col border border-[#e8e7e3] rounded-xl px-3 py-2 focus-within:border-[#1c1c1e] transition-colors cursor-text">
-                      <span className="text-[9px] text-[#9ca3af] font-bold uppercase tracking-wider leading-none mb-1">Move-in date</span>
+                  <div className="flex gap-1.5">
+                    <label className="flex-1 flex flex-col border border-[#e8e7e3] rounded-xl px-2.5 py-1.5 focus-within:border-[#1c1c1e] transition-colors cursor-text min-w-0">
+                      <span className="text-[9px] text-[#9ca3af] font-bold uppercase tracking-wider leading-none mb-1">Move-in</span>
                       <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)}
-                        className="text-[12px] font-bold text-[#1c1c1e] bg-transparent outline-none" />
+                        className="text-[11px] font-bold text-[#1c1c1e] bg-transparent outline-none w-full" />
                     </label>
-                    <label className="flex flex-col border border-[#e8e7e3] rounded-xl px-3 py-2 focus-within:border-[#1c1c1e] transition-colors cursor-text">
-                      <span className="text-[9px] text-[#9ca3af] font-bold uppercase tracking-wider leading-none mb-1">Move-out date</span>
+                    <label className="flex-1 flex flex-col border border-[#e8e7e3] rounded-xl px-2.5 py-1.5 focus-within:border-[#1c1c1e] transition-colors cursor-text min-w-0">
+                      <span className="text-[9px] text-[#9ca3af] font-bold uppercase tracking-wider leading-none mb-1">Move-out</span>
                       <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)}
-                        className="text-[12px] font-bold text-[#1c1c1e] bg-transparent outline-none" />
+                        className="text-[11px] font-bold text-[#1c1c1e] bg-transparent outline-none w-full" />
                     </label>
                   </div>
                 </div>
 
                 {/* Discount */}
                 <div>
-                  <p className="text-xs font-bold text-[#1c1c1e] mb-2.5">Min Discount</p>
+                  <p className="text-xs font-bold text-[#1c1c1e] mb-2">Min Discount</p>
                   <div className="flex gap-1.5 flex-wrap">
                     {[null, 10, 20, 30].map(d => (
                       <button key={d ?? 0} onClick={() => setMinDiscount(minDiscount === d ? null : d)}
@@ -790,21 +790,19 @@ export default function WebExploreScreen({ onViewListing: _onViewListing, onNavi
 
                 {/* Urgency */}
                 <div>
-                  <p className="text-xs font-bold text-[#1c1c1e] mb-2.5">Urgency</p>
-                  <div className="flex flex-col gap-1.5">
+                  <p className="text-xs font-bold text-[#1c1c1e] mb-2">Urgency</p>
+                  <div className="grid grid-cols-2 gap-1.5">
                     {([
                       { key: null,       label: 'Any',        sub: 'Show all' },
-                      { key: 'urgent',   label: '🔴 Urgent',  sub: '≤7 days, best negotiation' },
-                      { key: 'soon',     label: '🟡 Soon',    sub: 'Leaving in 1–3 weeks' },
-                      { key: 'relaxed',  label: '🟢 Relaxed', sub: '1+ month ahead' },
+                      { key: 'urgent',   label: '🔴 Urgent',  sub: '≤7 days' },
+                      { key: 'soon',     label: '🟡 Soon',    sub: '1–3 weeks' },
+                      { key: 'relaxed',  label: '🟢 Relaxed', sub: '1+ month' },
                     ] as const).map(opt => (
                       <button key={opt.key ?? 'null'} onClick={() => setUrgencyFilter(urgencyFilter === opt.key ? null : opt.key)}
-                        className={`flex items-center justify-between py-2 px-3 rounded-xl border-2 text-left transition-all ${urgencyFilter === opt.key ? 'border-[#1c1c1e] bg-[#1c1c1e]' : 'border-[#e8e7e3] hover:border-[#c0bfbb]'}`}
+                        className={`flex flex-col items-start px-3 py-2 rounded-xl border-2 text-left transition-all ${urgencyFilter === opt.key ? 'border-[#1c1c1e] bg-[#1c1c1e]' : 'border-[#e8e7e3] hover:border-[#c0bfbb]'}`}
                       >
-                        <div>
-                          <span className={`text-[12px] font-bold block leading-tight ${urgencyFilter === opt.key ? 'text-white' : 'text-[#1c1c1e]'}`}>{opt.label}</span>
-                          <span className={`text-[10px] ${urgencyFilter === opt.key ? 'text-white/60' : 'text-[#9ca3af]'}`}>{opt.sub}</span>
-                        </div>
+                        <span className={`text-[11px] font-bold leading-tight ${urgencyFilter === opt.key ? 'text-white' : 'text-[#1c1c1e]'}`}>{opt.label}</span>
+                        <span className={`text-[9px] mt-0.5 leading-tight ${urgencyFilter === opt.key ? 'text-white/60' : 'text-[#9ca3af]'}`}>{opt.sub}</span>
                       </button>
                     ))}
                   </div>
