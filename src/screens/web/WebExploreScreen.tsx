@@ -718,21 +718,6 @@ export default function WebExploreScreen({ onViewListing: _onViewListing, onNavi
             ) : (
               /* ── SUBLEASE FILTERS ───────────────────────────────── */
               <>
-                {/* Quick filters */}
-                <div className="flex flex-wrap gap-1.5">
-                  {[
-                    { label: '🔴 Urgent deals', active: urgencyFilter === 'urgent',      fn: () => setUrgencyFilter(urgencyFilter === 'urgent' ? null : 'urgent') },
-                    { label: '≥30% off',         active: minDiscount === 30,             fn: () => setMinDiscount(minDiscount === 30 ? null : 30) },
-                    { label: '🏠 Room Share',    active: subleaseType === 'roomshare',   fn: () => setSubleaseType(subleaseType === 'roomshare' ? 'all' : 'roomshare') },
-                    { label: 'Utils incl.',       active: false,                          fn: () => {} },
-                  ].map((q, i) => (
-                    <button key={i} onClick={q.fn}
-                      className={`px-2.5 py-1 rounded-full text-[10px] font-bold border transition-all ${q.active ? 'bg-[#1c1c1e] text-white border-[#1c1c1e]' : 'border-[#e8e7e3] text-[#6c6a66] hover:border-[#1c1c1e] hover:text-[#1c1c1e] bg-white'}`}>
-                      {q.label}
-                    </button>
-                  ))}
-                </div>
-
                 {/* Type of sublease — matches "Type of place" card style */}
                 <div>
                   <div className="flex items-center justify-between mb-2.5">
