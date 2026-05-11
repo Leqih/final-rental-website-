@@ -610,7 +610,7 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
             {is3D ? '🏙️ 3D' : '🗺️ 2D'}
           </button>
           {/* District zones toggle */}
-          <button onClick={() => setShowZones(v => !v)}
+          <button onClick={() => { setShowZones(v => { if (v) { setPickedCollege(null); setActiveZoneId(null); } return !v; }); }}
             className={`h-12 px-3.5 rounded-2xl shadow-lg border text-[12px] font-bold flex items-center gap-1.5 flex-shrink-0 transition-all ${
               showZones
                 ? 'bg-[#1c1c1e] text-white border-[#1c1c1e]'
@@ -1048,8 +1048,8 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
         );
       })()}
 
-      {/* Budget + Walk panel */}
-      {mode !== 'sublease' && (
+      {/* Walk panel — only visible when Districts is on */}
+      {mode !== 'sublease' && showZones && (
         <div className="absolute left-3 pointer-events-auto" style={{ zIndex: 10, bottom: 190 }}>
           <div style={{ width: 176, background: 'white', borderRadius: 20, boxShadow: '0 8px 32px rgba(0,0,0,0.13)', border: '1px solid rgba(0,0,0,0.06)', padding: '14px 14px 12px' }}>
 
