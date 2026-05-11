@@ -588,6 +588,8 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
                     setActiveZoneId(next);
                     if (next && mapRef.current) {
                       mapRef.current.flyTo({ center: zone.center, zoom: 15.8, pitch: 52, bearing: -20, duration: 700, essential: true });
+                    } else if (!next && mapRef.current) {
+                      mapRef.current.flyTo({ center: [-88.2272, 40.1075], zoom: 15.5, pitch: 55, bearing: -20, duration: 700, essential: true });
                     }
                   }}
                   className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-[10px] font-bold shadow-md border transition-all"
