@@ -641,9 +641,11 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
                 <span className="text-[9px] text-[#9ca3af] font-semibold uppercase tracking-wider leading-none">School</span>
                 <span className="text-[13px] font-semibold text-[#1c1c1e] leading-tight truncate">UIUC · Champaign IL</span>
               </div>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="6 9 12 15 18 9"/>
-              </svg>
+              <div className="w-8 h-8 rounded-full bg-[#1c1c1e] flex items-center justify-center flex-shrink-0">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <polygon points="3 11 22 2 13 21 11 13 3 11"/>
+                </svg>
+              </div>
             </button>
 
             {/* School dropdown */}
