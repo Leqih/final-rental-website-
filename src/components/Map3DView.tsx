@@ -425,14 +425,13 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
     if (map.getLayer('campus-zones-glow')) map.setLayoutProperty('campus-zones-glow', 'visibility', vis);
     if (map.getLayer('campus-zones-fill')) map.setLayoutProperty('campus-zones-fill', 'visibility', vis);
     if (map.getLayer('campus-zones-line')) map.setLayoutProperty('campus-zones-line', 'visibility', vis);
-    // Position zone label DOM elements when zones become visible
+    // Position zone label DOM elements when zones become visible (same transform as movePinsDirect)
     if (showZones) {
       campusZones.forEach(zone => {
         const el = zoneLabelElemsRef.current.get(zone.id);
         if (!el) return;
         const pt = map.project(zone.center as maplibregl.LngLatLike);
-        el.style.left = `${pt.x}px`;
-        el.style.top = `${pt.y}px`;
+        el.style.transform = `translate(calc(${pt.x}px - 50%), calc(${pt.y}px - 50%))`;
       });
     }
   }, [showZones, mapLoaded]);
@@ -906,7 +905,7 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
                   position: 'absolute', left: 0, top: 0,
                   transform: `translate(calc(${pos.x}px - 50%), calc(${pos.y}px - 100%)) ${isSelected ? 'scale(1.12)' : 'scale(1)'}`,
                   zIndex: isSelected ? 20 : isDimmed ? 5 : 10, cursor: isDimmed ? 'default' : 'pointer', pointerEvents: 'auto',
-                  display: 'flex', flexDirection: 'column', alignItems: 'center', transition: 'transform 0.2s ease, opacity 0.25s ease, filter 0.25s ease',
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', transition: 'opacity 0.25s ease, filter 0.25s ease',
                   opacity: isDimmed ? 0.18 : 1,
                   filter: isDimmed ? 'grayscale(1) blur(0.6px)' : 'none',
                   willChange: 'transform',
