@@ -232,25 +232,22 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
     map.addControl(new maplibregl.NavigationControl({ showCompass: true, visualizePitch: true }), 'top-right');
 
     let moveRafId: number | null = null;
+    // Synchronous DOM update — runs inside MapLibre's render loop so labels never lag
     const movePinsDirect = () => {
-      if (moveRafId !== null) return; // already scheduled this frame
-      moveRafId = requestAnimationFrame(() => {
-        moveRafId = null;
-        pinElemsRef.current.forEach((el, id) => {
-          const coords = coordsForPinsRef.current[id];
-          if (!coords) return;
-          const pt = map.project(coords);
-          el.style.transform = `translate(calc(${pt.x}px - 50%), calc(${pt.y}px - 100%))`;
-        });
-        if (showZonesRef.current) {
-          zoneLabelElemsRef.current.forEach((el, id) => {
-            const zone = campusZones.find(z => z.id === id);
-            if (!zone) return;
-            const pt = map.project(zone.center as maplibregl.LngLatLike);
-            el.style.transform = `translate(calc(${pt.x}px - 50%), calc(${pt.y}px - 50%))`;
-          });
-        }
+      pinElemsRef.current.forEach((el, id) => {
+        const coords = coordsForPinsRef.current[id];
+        if (!coords) return;
+        const pt = map.project(coords);
+        el.style.transform = `translate(calc(${pt.x}px - 50%), calc(${pt.y}px - 100%))`;
       });
+      if (showZonesRef.current) {
+        zoneLabelElemsRef.current.forEach((el, id) => {
+          const zone = campusZones.find(z => z.id === id);
+          if (!zone) return;
+          const pt = map.project(zone.center as maplibregl.LngLatLike);
+          el.style.transform = `translate(calc(${pt.x}px - 50%), calc(${pt.y}px - 50%))`;
+        });
+      }
     };
     const updatePinState = () => {
       if (modeRef.current === 'sublease') {
