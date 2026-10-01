@@ -74,7 +74,7 @@ const sampleComments: Record<number, { author: string; text: string; time: strin
   ],
   2: [
     { author: 'Emma_W', text: 'THIS. Always visit in person before sending any money. So sorry this happened.', time: '4h ago', votes: 45 },
-    { author: 'Sam_P', text: 'CampusNest verified listings are the way to go — all docs are checked before listing.', time: '3h ago', votes: 31 },
+    { author: 'Sam_P', text: 'Campus Nest verified listings are the way to go — all docs are checked before listing.', time: '3h ago', votes: 31 },
   ],
   3: [
     { author: 'Omar_F', text: 'Can confirm — floors 4–6 are the loudest. Floor 9+ is fine though.', time: '20h ago', votes: 22 },
@@ -150,7 +150,7 @@ export default function WebCommunityScreen({ initialSearch = '', onSearchConsume
     if (!composeTitle.trim()) return
     setPostSuccess(true)
     setTimeout(() => { setShowCompose(false); setPostSuccess(false); setComposeTitle(''); setComposeBody('') }, 1800)
-    showToast('Post published to r/CampusNest!')
+    showToast('Post published to r/Campus Nest!')
   }
 
   const vote = (id: number, dir: 'up' | 'down') => {
@@ -368,7 +368,7 @@ export default function WebCommunityScreen({ initialSearch = '', onSearchConsume
                   <div className="absolute -bottom-5 left-4 w-12 h-12 rounded-xl bg-white border-2 border-white flex items-center justify-center text-2xl shadow-sm">🏠</div>
                 </div>
                 <div className="px-4 pt-8 pb-4">
-                  <p className="text-[14px] font-bold text-[#1c1c1e]">r/CampusNest</p>
+                  <p className="text-[14px] font-bold text-[#1c1c1e]">r/Campus Nest</p>
                   <p className="text-[12px] text-[#6c6a66] mt-1 leading-relaxed">The UIUC student housing community. Find apartments, share reviews, avoid scams, and connect with fellow students.</p>
                   <div className="flex gap-4 mt-3 py-3 border-y border-[#f0efeb]">
                     <div className="text-center">
@@ -447,7 +447,7 @@ export default function WebCommunityScreen({ initialSearch = '', onSearchConsume
                       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1c1c1e" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
                     </div>
                     <p className="text-[15px] font-bold text-[#1c1c1e]">Post published!</p>
-                    <p className="text-[13px] text-[#6c6a66]">Your post is now live in r/CampusNest.</p>
+                    <p className="text-[13px] text-[#6c6a66]">Your post is now live in r/Campus Nest.</p>
                   </div>
                 ) : (
                   <div className="flex gap-2 pt-1">
@@ -652,7 +652,7 @@ export default function WebCommunityScreen({ initialSearch = '', onSearchConsume
                 <div className="absolute -bottom-5 left-4 w-12 h-12 rounded-xl bg-white border-2 border-white flex items-center justify-center text-2xl shadow-sm">🏠</div>
               </div>
               <div className="px-4 pt-8 pb-4">
-                <p className="text-[14px] font-bold text-[#1c1c1e]">r/CampusNest</p>
+                <p className="text-[14px] font-bold text-[#1c1c1e]">r/Campus Nest</p>
                 <p className="text-[12px] text-[#6c6a66] mt-1 leading-relaxed">The UIUC student housing community. Find apartments, share reviews, avoid scams, and connect with fellow students.</p>
                 <div className="flex gap-4 mt-3 py-3 border-y border-[#f0efeb]">
                   <div className="text-center">
@@ -769,7 +769,7 @@ export default function WebCommunityScreen({ initialSearch = '', onSearchConsume
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1c1c1e" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
                   </div>
                   <p className="text-[15px] font-bold text-[#1c1c1e]">Post published!</p>
-                  <p className="text-[13px] text-[#6c6a66]">Your post is now live in r/CampusNest.</p>
+                  <p className="text-[13px] text-[#6c6a66]">Your post is now live in r/Campus Nest.</p>
                 </div>
               ) : (
                 <div className="flex gap-2 pt-1">

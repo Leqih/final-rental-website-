@@ -354,7 +354,7 @@ export default function ListingDetailScreen({ listing, onBack, selectedCollegeId
             <div className="flex items-center justify-between mb-4">
               <div>
                 <p className="text-[#1c1c1e] text-[15px] font-semibold">What students say</p>
-                <p className="text-[#6c6a66] text-[12px] mt-0.5">From the CampusNest community</p>
+                <p className="text-[#6c6a66] text-[12px] mt-0.5">From the Campus Nest community</p>
               </div>
               <div className="flex items-center gap-1">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="#f59e0b" stroke="#f59e0b" strokeWidth="1.5">
