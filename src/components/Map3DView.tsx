@@ -201,8 +201,8 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
   const activeZoneIdRef = useRef<string | null>(null);
   activeZoneIdRef.current = activeZoneId;
   const [mapZoom, setMapZoom] = useState(15.5);
-  const [mapMaxPrice, setMapMaxPrice] = useState<number | null>(null);
-  const [walkTimeMins, setWalkTimeMins] = useState<5 | 10 | 15>(10);
+  const [mapMaxPrice] = useState<number | null>(null);
+  const [walkTimeMins] = useState<5 | 10 | 15>(10);
   const [pickedCollege, setPickedCollege] = useState<College | null>(null);
 
   // Derived early — needed by useEffects below (must be before any useEffect that refs them)
@@ -231,7 +231,6 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
 
     map.addControl(new maplibregl.NavigationControl({ showCompass: true, visualizePitch: true }), 'top-right');
 
-    let moveRafId: number | null = null;
     // Synchronous DOM update — runs inside MapLibre's render loop so labels never lag
     const movePinsDirect = () => {
       pinElemsRef.current.forEach((el, id) => {
@@ -758,7 +757,6 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
       {showZones && campusZones.map(zone => {
         const count = listings.filter(l => getListingZone(listingCoords[l.id])?.id === zone.id).length;
         const isActiveZone = effectiveZoneId === zone.id;
-        const isZoneDimmed = !!(effectiveZoneId && !isActiveZone);
         return (
           <div
             key={zone.id}
@@ -882,7 +880,6 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
             const dotColor = !hasProfile ? '#9ca3af' : score >= 80 ? '#22c55e' : score >= 60 ? '#f59e0b' : '#9ca3af';
             const zone = showZones ? getListingZone(listingCoords[listing.id]) : null;
             const zoneColor = zone?.color;
-            const pinWalkMins = activeCollege ? (listing.walkFrom[activeCollege.id] ?? null) : null;
             // Walk-panel: dim pins outside that college's zone; zone-chip: dim by zone boundary
             const isOutOfRange = !!(activeCollege && getListingZone(listingCoords[listing.id])?.id !== activeCollege.id);
             const isOutOfZone = !!(activeZoneId && zone?.id !== activeZoneId);
@@ -1210,7 +1207,7 @@ export default function Map3DView({ selectedCollege, profile, onViewListing, onR
                 const disc = Math.round((1 - s.price / s.marketRate) * 100)
                 const urgColor = s.daysUntilLeave <= 7 ? 'bg-red-500' : s.daysUntilLeave <= 21 ? 'bg-orange-400' : ''
                 const typeLabel = s.type === 'sublease' ? '🔄 Sublet' : s.type === 'transfer' ? '📋 Transfer' : '🏠 Room Share'
-                const fmtD = (d: string) => { const [,m,day] = d.split('-'); return ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][+m-1]+' '+d.split('-')[2].replace(/^0/,''); }
+                const fmtD = (d: string) => { const [,m,day] = d.split('-'); return ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][+m-1]+' '+day.replace(/^0/,''); }
                 return (
                   <button key={s.id}
                     onClick={() => {
